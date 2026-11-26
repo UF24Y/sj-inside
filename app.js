@@ -242,12 +242,16 @@ function cafeBanner(title,pillar){
     </div>
   </header>`;
 }
-function cafeLayout(contents,boardId,{article=false}={}){
+function cafeLayout(contents,boardId,{article=false,view}={}){
   const title=esc(cafeTitle(demoReading.displayName));
   const progress=demoReading.progress;
   const exit='<a class="board-link demo-exit" href="#home">나가기</a>';
   return `<div class="reportwrap gallery-wrap community-gallery cafe-layout ${article?'gallery-thread cafe-open-post':'cafe-home'}">
     ${cafeBanner(title,demoReading.pillars?.day)}
+    <nav class="cafe-home-bar" aria-label="카페 홈 메뉴">
+      <a href="#demo-reading"${view==='home'?' aria-current="page"':''}>카페 홈</a>
+      <a href="#demo-reading/all"${view==='all'?' aria-current="page"':''}>전체글보기</a>
+    </nav>
     <aside class="cafe-masthead cafe-sidebar" aria-label="카페 정보 및 게시판">
       <h2 class="cafe-sidebar-heading">카페 정보</h2>
       <div class="cafe-brandbar">
@@ -385,12 +389,78 @@ function readingNoticePage(route,post){
     ${contents}
   </div>`;
 }
+function cafeEntries(posts){
+  return posts.map(post=>({route:'demo-reading',post}));
+}
+function cafeHomeFeature(progress){
+  const firstVisit=!progress.isRead('notice');
+  const nextBoard=progress.recommendedBoard;
+  const nextPost=progress.posts(nextBoard).find(post=>!progress.isRead(post.id));
+  const {href,label,title,text,action}=firstVisit?{
+    href:demoReading.noticeReady?'#demo-reading/notice':'',
+    label:'공지사항',
+    title:'처음엔 공지부터',
+    text:demoReading.noticeReady?'공지를 다 읽으면 일반 게시판이 열려요.':'공지사항이 곧 올라와요.',
+    action:'공지 읽기',
+  }:nextPost?{
+    href:'#demo-reading/'+esc(nextPost.id),
+    label:cafeBoardById.get(nextBoard).label,
+    title:galleryText(nextPost.title,'demo-reading'),
+    text:'아직 읽지 않은 글부터 이어서 볼 수 있어요.',
+    action:'이어서 읽기',
+  }:{
+    href:'#demo-reading/all',
+    label:'전체글보기',
+    title:'읽을 글을 모두 확인했어요',
+    text:'카페에 올라온 글을 다시 모아 볼 수 있어요.',
+    action:'글 모아 보기',
+  };
+  const image=nextPost?.image?.src??'./cafe-ink-intro.webp';
+  const unread=firstVisit&&!demoReading.noticeOpened?' demo-notice-unread':'';
+  return `<section class="cafe-feature" id="demo-notice-slot" aria-labelledby="cafe-feature-heading">
+    <div class="cafe-feature-copy">
+      <span class="cafe-feature-label">${label}</span>
+      <h1 class="cafe-feature-title" id="cafe-feature-heading">${title}</h1>
+      <p class="cafe-feature-text">${text}</p>
+      ${href?`<a href="${href}" class="cafe-feature-action${unread}">${action} ${icon('arrow',14)}</a>`:''}
+    </div>
+    <img class="cafe-feature-image" src="${esc(image)}" alt="" decoding="async">
+  </section>`;
+}
+function demoCafeHome(){
+  const progress=demoReading.progress;
+  const boards=cafeBoards.map(board=>{
+    const open=progress.isUnlocked(board.id);
+    const notice=board.id==='notice'&&demoReading.noticeReady?'demo-reading':'';
+    const posts=progress.posts(board.id).slice(0,4);
+    const body=!open?`<p class="cafe-digest-lock">${icon('lock',14)} <span>${cafeRankGuidance[board.level-1]}</span></p>`
+      :posts.length||notice?postsRows(cafeEntries(posts),notice)
+      :`<p class="cafe-digest-empty">${board.id==='notice'?'공지 준비 중':'아직 올라온 글이 없어요.'}</p>`;
+    return `<section class="cafe-digest-section" data-board="${board.id}">
+      <div class="cafe-digest-head"><h2>${board.label}</h2>
+        <a class="board-link" href="${cafeBoardLink(board.id)}" aria-label="${board.label} 더보기">더보기 ${icon('arrow',12)}</a></div>
+      ${body}
+    </section>`;
+  }).join('');
+  return cafeLayout(`<div class="cafe-overview">${cafeHomeFeature(progress)}
+    <section class="cafe-board-digest" aria-label="게시판별 글">${boards}</section>
+  </div>`,undefined,{view:'home'});
+}
+function demoAllPosts(){
+  const progress=demoReading.progress;
+  const entries=cafeEntries(cafeBoards.flatMap(({id})=>progress.posts(id)));
+  const notice=demoReading.noticeReady?'demo-reading':'';
+  return cafeLayout(`<section class="gallery-index" aria-labelledby="cafe-board-title">
+    <header class="cafe-board-head"><h1 class="cafe-board-heading" id="cafe-board-title">전체글보기</h1></header>
+    <div id="demo-notice-slot" aria-live="polite">${postsRows(entries,notice)}</div>
+  </section>`,undefined,{view:'all'});
+}
 function demoBoardList(boardId){
   const progress=demoReading.progress;
   const board=cafeBoardById.get(boardId);
   const open=progress.isUnlocked(boardId);
   const count=progress.counts(boardId);
-  const entries=progress.posts(boardId).map(post=>({route:'demo-reading',post}));
+  const entries=cafeEntries(progress.posts(boardId));
   const notice=boardId==='notice'&&demoReading.noticeReady?'demo-reading':'';
   const rows=open?`<div${boardId==='notice'?' id="demo-notice-slot" aria-live="polite"':''}>${postsRows(entries,notice)}</div>`
     :`<div class="cafe-board-access">
@@ -909,17 +979,19 @@ function route(scroll=true){
   if(key==='records'&&!chart){history.replaceState(null,'','#birth');key='birth';}
   if(key==='youtube'&&!config.google){history.replaceState(null,'','#connect');key='connect';}
   if(!['birth','records','demo','result','reading','demo-reading','home','connect','youtube','gallery','library'].includes(key))key='home';
-  let demoBoard;
+  let demoBoard,cafeView='home';
   if(config.demoOnly&&key==='demo-reading'){
     const progress=demoReading.progress;
     demoBoard=progress.recommendedBoard;
     if(postId==='board'){
       if(cafeBoardById.has(boardParam))demoBoard=boardParam;
       else history.replaceState(null,'',cafeBoardLink(demoBoard));
-      postId=null;
+      postId=null;cafeView='board';
+    }else if(postId==='all'){
+      postId=null;cafeView='all';
     }else if(postId&&(!progress.post(postId)||(postId==='notice'&&!demoReading.noticeReady))){
       demoBoard=progress.boardOf(postId)||demoBoard;
-      history.replaceState(null,'',cafeBoardLink(demoBoard));postId=null;
+      history.replaceState(null,'',cafeBoardLink(demoBoard));postId=null;cafeView='board';
     }
   }
   if(dialog.open)dialog.close();
@@ -971,7 +1043,10 @@ function route(scroll=true){
     }
     if(activePost&&activePost!==previousPost)postViews.set(activePost,(postViews.get(activePost)||0)+1);
     if(postId&&!activePost)history.replaceState(null,'','#'+key);
-    main.innerHTML=activePost?postPage(activePost,key):config.demoOnly?demoBoardList(demoBoard):postsList(key);
+    if(activePost)main.innerHTML=postPage(activePost,key);
+    else if(!config.demoOnly)main.innerHTML=postsList(key);
+    else if(cafeView==='board')main.innerHTML=demoBoardList(demoBoard);
+    else main.innerHTML=cafeView==='all'?demoAllPosts():demoCafeHome();
     if(config.demoOnly&&key==='demo-reading'&&!activePost)scheduleDemoNotice();
     if(activePost)document.title=postText(activePost.title,key)+' · '+storyTitle;
   }

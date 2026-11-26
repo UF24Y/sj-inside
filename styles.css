@@ -841,6 +841,112 @@ body:has(.cafe-home, .cafe-threadbar) {
 .cafe-banner-title:hover {text-decoration: underline; text-underline-offset: .15em}
 .cafe-banner-pillar {color: #584534; font: 650 clamp(.83rem, 1.4vw, 1rem)/1.5 var(--serif)}
 .cafe-banner-pillar > span {margin-inline-start: 2px}
+.cafe-home-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0 12px;
+  min-height: 39px;
+  padding-inline: 10px;
+  border: 1px solid var(--board-rule);
+  background: var(--panel);
+}
+.cafe-home-bar a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 39px;
+  padding-inline: 9px;
+  color: var(--muted);
+  font-size: .84rem;
+  font-weight: 650;
+}
+.cafe-home-bar a:hover, .cafe-home-bar a[aria-current="page"] {color: var(--pine)}
+.cafe-home-bar a[aria-current="page"] {box-shadow: inset 0 -2px var(--pine)}
+.cafe-home-bar a:focus-visible {outline-offset: -3px}
+.cafe-overview {display: grid; gap: clamp(15px, 2.1vw, 25px); min-width: 0}
+.cafe-feature {
+  --feature-frame: 6px;
+  --feature-image-width: 32%;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 148px;
+  padding: var(--feature-frame);
+  padding-inline-end: var(--feature-image-width);
+  overflow: hidden;
+  border: 1px solid var(--board-rule);
+  background: var(--panel);
+}
+.cafe-feature.demo-notice-arriving {animation: demo-notice-appear 240ms ease-out both}
+.cafe-feature-copy {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 15px clamp(12px, 2.1vw, 25px);
+  background: #f5f1e7;
+}
+.cafe-feature-image {
+  position: absolute;
+  inset-block-start: var(--feature-frame);
+  inset-inline-end: var(--feature-frame);
+  width: calc(var(--feature-image-width) - var(--feature-frame));
+  height: calc(100% - 2 * var(--feature-frame));
+  object-fit: cover;
+  object-position: 64% 32%;
+}
+.cafe-feature-label {color: var(--pine); font-size: .74rem; font-weight: 750}
+.cafe-feature-title {font-size: clamp(1.05rem, 2.3vw, 1.52rem); font-weight: 790; letter-spacing: -.042em; line-height: 1.28}
+.cafe-feature-text {color: var(--muted); font-size: .81rem; line-height: 1.5}
+.cafe-feature-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  margin: 2px 0 0 -6px;
+  padding: 0 6px;
+  border-radius: 3px;
+  color: var(--pine);
+  font-size: .78rem;
+  font-weight: 740;
+}
+.cafe-feature-action:hover {text-decoration: underline; text-underline-offset: 3px}
+.cafe-feature-action.demo-notice-unread {background: #eef6ff; animation: demo-notice-pulse 2.2s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce) {
+  .cafe-feature.demo-notice-arriving, .cafe-feature-action.demo-notice-unread {animation: none}
+}
+.cafe-board-digest {display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 17px 15px}
+.cafe-digest-section {min-width: 0; background: var(--panel)}
+.cafe-digest-head {display: flex; align-items: baseline; justify-content: space-between; gap: 5px 8px; padding: 0 2px 6px}
+.cafe-digest-head :is(h2, strong) {font-size: .93rem; font-weight: 770; letter-spacing: -.02em}
+.cafe-digest-head a:hover {color: var(--pine); text-decoration: underline}
+.cafe-digest-head > a, .cafe-digest-head > small {color: var(--muted); font-size: .75rem}
+.cafe-digest-section .gallery-rows, .cafe-digest-lock, .cafe-digest-empty {border-top: 1px solid #839189}
+:is(.cafe-digest-lock, .cafe-digest-empty) {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 42px;
+  padding: 8px 7px;
+  border-bottom: 1px solid var(--board-rule);
+  background: var(--board-tint);
+  color: var(--muted);
+  font-size: .8rem;
+  line-height: 1.5;
+}
+.cafe-digest-lock svg {flex: none}
+.cafe-home .cafe-digest-section .gallery-rows li > a {
+  min-height: 43px;
+  padding: 6px 7px;
+  border-radius: 0;
+}
+.cafe-digest-section .gallery-rows {border-bottom: 1px solid var(--board-rule)}
+.cafe-digest-section .gallery-list-meta {font-size: .74rem}
+.cafe-digest-section .gallery-list-meta :is(.gallery-list-views, .gallery-list-votes) {display: none}
+.cafe-home .cafe-digest-section .gallery-list-title {font-size: .86rem}
 .cafe-masthead {
   margin-bottom: 12px;
   border: 1px solid var(--board-rule);
@@ -1101,6 +1207,7 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
     max-width: none;
   }
   .cafe-banner {margin-bottom: 0}
+  .cafe-layout > .cafe-home-bar {margin-block: -12px -6px}
   .cafe-layout > .cafe-sidebar {
     margin: 0;
     padding: 0 0 7px;
@@ -1139,6 +1246,7 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
   .cafe-layout > .cafe-sidebar {position: sticky; top: 14px; max-height: calc(100svh - 28px); overflow-y: auto; scrollbar-width: thin}
 }
 @media (max-width: 899.98px) {
+  .cafe-layout > .cafe-home-bar {margin-bottom: 12px}
   .cafe-open-post > .cafe-sidebar {display: none}
 }
 @media (max-width: 760px) {
@@ -1159,6 +1267,7 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
   body.isolated-demo #main:has(.cafe-home, .cafe-threadbar) {width: 100%}
   .community-gallery:has(.cafe-masthead, .cafe-threadbar) {padding-top: 0}
   .cafe-banner {margin-bottom: 0; border-inline: 0; border-radius: 0}
+  .cafe-layout > .cafe-home-bar {margin: 0; border: 0; border-bottom: 1px solid var(--board-rule)}
   .cafe-masthead, .cafe-home .gallery-index, .gallery-thread:has(.cafe-threadbar) .gallery-post,
   .gallery-thread:has(.cafe-threadbar) .gallery-comments {border-inline: 0; border-radius: 0}
   .cafe-masthead {border-top: 0; margin-bottom: 0}
@@ -1166,6 +1275,12 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
   .community-gallery .cafe-threadbar {margin-bottom: 0}
   .gallery-thread:has(.cafe-threadbar) .gallery-post {border-top: 0}
   .cafe-reading-progress {margin-inline: var(--gallery-gutter); padding: 12px}
+}
+@media (max-width: 540px) {
+  .cafe-overview {padding: 12px var(--gallery-gutter) 0}
+  .cafe-feature {--feature-frame: 4px; --feature-image-width: 26%; min-height: 131px}
+  .cafe-feature-copy {padding-block: 12px}
+  .cafe-board-digest {grid-template-columns: minmax(0, 1fr); gap: 13px}
 }
 @media (max-width: 390px) {
   .cafe-board-nav > a {min-height: 38px; font-size: .78rem}
