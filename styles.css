@@ -67,68 +67,21 @@ body.isolated-demo {
 body.isolated-demo .top, body.isolated-demo footer.wrap {display: none}
 body.isolated-demo .dark:hover {background: #164c3a; border-color: #164c3a}
 .demo-gate {display: grid; place-items: center; min-height: 100svh; padding-block: 24px}
-.demo-gate-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  width: min(100%, 880px);
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--panel);
-  box-shadow: 0 16px 52px #18352812;
-}
-.demo-cover {
-  --cover-ink: #352a20;
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  align-items: flex-end;
-  min-height: 468px;
-  padding: clamp(23px, 4vw, 50px);
-  background: #f6ecd9;
-  color: var(--cover-ink);
-}
-.demo-cover[data-theme="stone"] {--cover-ink: #263332}
-.demo-cover[data-theme="lamp"] {--cover-ink: #403525}
-.demo-cover[data-theme="ember"] {--cover-ink: #55372c}
-.demo-cover img, .demo-cover::after {position: absolute; inset: 0; width: 100%; height: 100%}
-.demo-cover img {z-index: -2; object-fit: cover}
-.demo-cover::after {
-  content: '';
-  z-index: -1;
-  background: linear-gradient(90deg, #f7eddbaa, #f7eddb00 69%), linear-gradient(0deg, #f5e8d3a8, #f5e8d300 61%);
-}
-.demo-cover-caption {display: grid; justify-items: start; gap: 8px}
-.demo-cover-hanja {
-  border: 1px solid #9a8260;
-  padding: 3px 9px;
-  background: #fbf2e4;
-  font: 650 .9rem/1.35 var(--serif);
-  letter-spacing: .16em;
-}
-.demo-cover-title {font: 830 clamp(2.45rem, 6vw, 4.25rem)/1.08 var(--serif); letter-spacing: -.085em}
-.demo-cover-line {font: 650 clamp(.84rem, 1.8vw, .98rem)/1.5 var(--sans)}
 .demo-gate-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-  padding: clamp(22px, 4.3vw, 52px);
+  width: min(100%, 410px);
+  padding: clamp(19px, 5vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: 0 12px 38px #163e250d;
 }
-.demo-gate-card h1 {font-size: 1.66rem; line-height: 1.3; letter-spacing: -.04em}
+.demo-gate-brand {display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 1.04rem}
+.demo-gate-card h1 {margin-top: 18px; font-size: 1.66rem; line-height: 1.3; letter-spacing: -.04em}
 .demo-gate-card > p {margin-top: 7px; color: var(--muted); font-size: .9rem}
 .demo-gate-card .demo-gallery-form {grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 20px 0 0}
 .demo-gate-card .demo-gallery-form :is(input, select) {font-size: 1rem; min-height: 44px}
 .demo-gate-card .demo-gallery-form .error:empty {display: none}
 .demo-gate-card > .demo-gate-note {margin-top: 12px; font-size: .78rem}
-@media (max-width: 700px) {
-  .demo-gate {align-items: start; padding-block: 18px 25px}
-  .demo-gate-layout {grid-template-columns: minmax(0, 1fr)}
-  .demo-cover {min-height: clamp(190px, 56vw, 280px); padding: 19px 21px}
-  .demo-cover img {object-position: center 54%}
-  .demo-cover-caption {gap: 6px}
-  .demo-gate-card h1 {font-size: 1.42rem}
-}
 .demo-exit {margin-inline-start: 3px; font-weight: 700}
 .demo-notice-arriving .gallery-pinned-row {animation: demo-notice-appear 240ms ease-out both}
 @keyframes demo-notice-appear {
@@ -847,6 +800,47 @@ body:has(.cafe-home, .cafe-threadbar) {
   --ink: #242a27;
   max-width: 790px;
 }
+.cafe-banner {
+  position: relative;
+  isolation: isolate;
+  grid-column: 1 / -1;
+  display: grid;
+  align-content: center;
+  min-width: 0;
+  min-height: 165px;
+  aspect-ratio: 3.2;
+  margin-bottom: 12px;
+  padding: clamp(18px, 4vw, 52px);
+  overflow: hidden;
+  border: 1px solid #d3c4ac;
+  border-radius: 9px;
+  background: #f3e8d3;
+  color: #342a21;
+}
+.cafe-banner > img, .cafe-banner::after {position: absolute; inset: 0; width: 100%; height: 100%}
+.cafe-banner > img {object-fit: cover}
+.cafe-banner::after {
+  content: '';
+  pointer-events: none;
+  background: linear-gradient(90deg, #f8efdeef, #f8efdec7 34%, #f8efde73 66%, #f8efde00 92%);
+}
+.cafe-banner-copy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: start;
+  gap: 9px;
+  max-width: min(70%, 40rem);
+}
+.cafe-banner-title {
+  max-width: 100%;
+  font: 760 clamp(1.32rem, 3.6vw, 3.05rem)/1.17 var(--serif);
+  letter-spacing: -.055em;
+  overflow-wrap: anywhere;
+}
+.cafe-banner-title:hover {text-decoration: underline; text-underline-offset: .15em}
+.cafe-banner-pillar {color: #584534; font: 650 clamp(.83rem, 1.4vw, 1rem)/1.5 var(--serif)}
+.cafe-banner-pillar > span {margin-inline-start: 2px}
 .cafe-masthead {
   margin-bottom: 12px;
   border: 1px solid var(--board-rule);
@@ -1106,6 +1100,7 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
     align-items: start;
     max-width: none;
   }
+  .cafe-banner {margin-bottom: 0}
   .cafe-layout > .cafe-sidebar {
     margin: 0;
     padding: 0 0 7px;
@@ -1147,6 +1142,15 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
   .cafe-open-post > .cafe-sidebar {display: none}
 }
 @media (max-width: 760px) {
+  .cafe-banner {
+    min-height: clamp(100px, 31vw, 165px);
+    aspect-ratio: auto;
+    padding: 13px var(--gallery-gutter);
+  }
+  .cafe-banner::after {
+    background: linear-gradient(90deg, #f8efdef2, #f8efdec7 52%, #f8efde8c 83%, #f8efde30);
+  }
+  .cafe-banner-copy {max-width: 100%; gap: 4px}
   .cafe-board-nav {grid-template-columns: repeat(4, minmax(0, 1fr))}
   .cafe-board-nav > :nth-child(n+5) {border-top: 1px solid var(--board-rule)}
 }
@@ -1154,6 +1158,7 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
   body.isolated-demo:has(.cafe-home, .cafe-threadbar) {background: var(--panel)}
   body.isolated-demo #main:has(.cafe-home, .cafe-threadbar) {width: 100%}
   .community-gallery:has(.cafe-masthead, .cafe-threadbar) {padding-top: 0}
+  .cafe-banner {margin-bottom: 0; border-inline: 0; border-radius: 0}
   .cafe-masthead, .cafe-home .gallery-index, .gallery-thread:has(.cafe-threadbar) .gallery-post,
   .gallery-thread:has(.cafe-threadbar) .gallery-comments {border-inline: 0; border-radius: 0}
   .cafe-masthead {border-top: 0; margin-bottom: 0}

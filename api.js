@@ -3,7 +3,7 @@ import {readings} from './demo-data.js';
 export async function api(path,body){
   if(path==='/api/config'&&body===undefined)return {demoOnly:true};
   if(path==='/api/demo'&&body===undefined){
-    return {readings:readings.map(({profileId,label,pillars})=>({profileId,label,dayPillar:pillars.day}))};
+    return {readings:readings.map(({profileId,label})=>({profileId,label}))};
   }
   if(path==='/api/demo/start'){
     const reading=readings.find(({profileId})=>profileId===body?.profileId);
