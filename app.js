@@ -11,7 +11,7 @@ const main=document.querySelector('#main'), dialog=document.querySelector('#dial
 const $=(sel,root=document)=>root.querySelector(sel);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const button=(href,text,symbol,style='dark')=>`<a href="#${href}" class="button ${style}">${symbol?icon(symbol):''}${text}</a>`;
-const emptyBirth=()=>({calendar:'solar',year:'',month:'',day:'',time:'',unknownTime:false,birthplace:'',timezone:'',leapMonth:false,confirmAssumption:false,localConsent:false});
+const emptyBirth=()=>({calendar:'solar',year:'',month:'',day:'',time:'',gender:'',unknownTime:false,birthplace:'',timezone:'',leapMonth:false,confirmAssumption:false,localConsent:false});
 const sampleBirthForm=()=>{
   const {date,time}=sampleInputs.birth;
   const [year,month,day]=date.split('-');
@@ -34,11 +34,13 @@ let stopReadingCommentNotice;
 function message(text){const box=$('#notice');box.textContent=text;box.classList.add('show');clearTimeout(notification);notification=setTimeout(()=>box.classList.remove('show'),3500);}
 function chartCard(c){
   const klass={목:'wood',화:'fire',토:'earth',금:'metal',수:'water'};
+  const luck=c.majorLuck;
+  const luckNote=luck&&`<p class="hint">대운은 ${luck.direction==='forward'?'순행':'역행'}으로 계산했어요.${luck.startAgeMonths===null?' 현재 대운의 시작 시기는 확인이 필요해요.':''}</p>`;
   return `<aside class="chartcard"><div class="chartheading"><span class="chartmark">${icon('compass',22)}</span><h3>나의 명식</h3><span class="han">四柱</span></div>
     <p class="chartdate">${esc(c.solarDate.replaceAll('-','.'))} · 양력 환산</p>
     <div class="pillars">${c.pillars.map(p=>`<div class="pillar ${klass[p.element]||'unknown'}"><span>${esc(p.key==='year'?'연주':p.label)}</span><strong lang="zh-Hant">${esc(p.hanja)}</strong><b>${esc(p.hangul)}</b></div>`).join('')}</div>
     <div class="chartfoot">${icon('info',15)}<span>${c.assumedTimezone?'한국 시간대 임시 가정':esc(c.timezone)} · ${c.birthplaceKnown?'입력한 출생지':'출생지 미확정'}</span></div>
-    <details class="chartdetails"><summary>계산 기준과 미확정 항목</summary><ul>${c.warnings.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul></details></aside>`;
+    ${luckNote||''}<details class="chartdetails"><summary>계산 기준과 미확정 항목</summary><ul>${c.warnings.map(w=>'<li>'+esc(w)+'</li>').join('')}</ul></details></aside>`;
 }
 function demoEntryForm(){
   const presets=demo.readings??[];
@@ -48,7 +50,7 @@ function demoEntryForm(){
       </label>
       <label for="demo-birth-profile">생년월시
         <select id="demo-birth-profile" name="profile" required>
-          <option value="" disabled selected>출생 정보 선택</option>
+          <option value="" disabled selected>출생 정보와 성별 선택</option>
           ${presets.map(({profileId,label})=>`<option value="${esc(profileId)}">${esc(label)}</option>`).join('')}
         </select>
       </label>
@@ -91,6 +93,7 @@ function birthForm(){
     <label class="checkbox" id="leaprow" ${b.calendar!=='lunar'?'hidden':''}><input name="leapMonth" type="checkbox" ${checked(b.leapMonth)}>음력 윤달에 태어났어요</label></fieldset>
     <fieldset><legend>생년월일</legend><div class="datefields"><label><input name="year" type="text" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="YYYY" aria-label="출생 연도" value="${esc(b.year)}" required><span>년</span></label><label><input name="month" type="text" inputmode="numeric" maxlength="2" pattern="[0-9]{1,2}" placeholder="MM" aria-label="출생 월" value="${esc(b.month)}" required><span>월</span></label><label><input name="day" type="text" inputmode="numeric" maxlength="2" pattern="[0-9]{1,2}" placeholder="DD" aria-label="출생 일" value="${esc(b.day)}" required><span>일</span></label></div><p class="hint">양력 환산 기준 1900–2050년을 지원합니다.</p></fieldset>
     <fieldset><legend>출생 시각</legend><div class="inline"><input class="timefield" type="time" name="time" aria-label="출생 시각" value="${esc(b.time)}" ${b.unknownTime?'disabled':'required'}><label class="checkbox"><input type="checkbox" name="unknownTime" ${checked(b.unknownTime)}>시각을 몰라요</label></div></fieldset>
+    <fieldset><label class="field" for="birth-gender">대운 계산 기준 <span class="optional">선택</span></label><div class="field"><select id="birth-gender" name="gender" aria-describedby="birth-gender-hint"><option value="">건너뛰기</option><option value="male" ${b.gender==='male'?'selected':''}>남성 기준</option><option value="female" ${b.gender==='female'?'selected':''}>여성 기준</option></select></div><p class="hint" id="birth-gender-hint">전통 사주에서 10년 흐름을 계산하는 데 써요.</p></fieldset>
     <div class="pair"><label class="field">출생지 <span class="optional">선택</span><input type="text" name="birthplace" maxlength="80" placeholder="도시 이름" value="${esc(b.birthplace)}"></label><label class="field">출생 당시 시간대<input type="text" name="timezone" list="zones" maxlength="100" placeholder="모름 · 한국 시간대 임시 가정" value="${esc(b.timezone)}"></label><datalist id="zones"><option value="UTC">${zones.map(z=>'<option value="'+esc(z)+'">').join('')}</datalist></div>
     <p class="hint">한국 출생은 Asia/Seoul을 선택하세요. 해외 출생은 해당 도시의 시간대를 확인해 주세요.</p>
     <label class="checkbox softbox" id="assumerow"><input name="confirmAssumption" type="checkbox" ${checked(b.confirmAssumption)}><span>출생지 또는 시간대가 미확정임을 확인했습니다. 시간대를 비워 두면 한국 시간대로 임시 계산합니다.</span></label>
@@ -100,7 +103,7 @@ function birthForm(){
 function wireBirth(){
   const form=$('#birthform'); const fields=form.elements;
   function sync(){
-    for(const k of ['calendar','year','month','day','time','birthplace','timezone'])birth[k]=fields[k].value;
+    for(const k of ['calendar','year','month','day','time','gender','birthplace','timezone'])birth[k]=fields[k].value;
     for(const k of ['leapMonth','unknownTime','confirmAssumption','localConsent'])birth[k]=fields[k].checked;
     $('#leaprow').hidden=birth.calendar!=='lunar';fields.time.disabled=birth.unknownTime;fields.time.required=!birth.unknownTime;
     const assume=!birth.timezone.trim()||!birth.birthplace.trim();$('#assumerow').hidden=!assume;fields.confirmAssumption.required=assume;
@@ -113,7 +116,7 @@ function wireBirth(){
     finally{submit.disabled=false;}
   });
 }
-function birthPayload(){return {calendar:birth.calendar,date:[birth.year,birth.month.padStart(2,'0'),birth.day.padStart(2,'0')].join('-'),time:birth.unknownTime?'':birth.time,birthplace:birth.birthplace.trim(),timezone:birth.timezone.trim(),leapMonth:birth.calendar==='lunar'&&birth.leapMonth,confirmAssumption:birth.confirmAssumption};}
+function birthPayload(){return {calendar:birth.calendar,date:[birth.year,birth.month.padStart(2,'0'),birth.day.padStart(2,'0')].join('-'),time:birth.unknownTime?'':birth.time,...(birth.gender?{gender:birth.gender}:{}),birthplace:birth.birthplace.trim(),timezone:birth.timezone.trim(),leapMonth:birth.calendar==='lunar'&&birth.leapMonth,confirmAssumption:birth.confirmAssumption};}
 const modeName={sample:'가상 스레드',local:'로컬 생성',ai:'OpenAI 생성',chat:'가상 스레드',preset:'데모 스레드'};
 const postAuthors=['지나가던갤러','한줄만씀','명식구경중','관전중ㅇㅇ'];
 const topicKey=route=>route==='gallery'?'demo':route;
