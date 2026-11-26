@@ -221,6 +221,50 @@ body.isolated-demo .dark:hover {background: #164c3a; border-color: #164c3a}
   .gallery-figure-inline {margin-block: 17px}
   .gallery-figure-inline img {aspect-ratio: 2 / 1}
 }
+.gallery-figure.cafe-art {
+  position: relative;
+  display: grid;
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 4 / 5;
+  margin-block: 20px;
+  border-radius: 8px;
+  border: 1px solid #d4c5a9;
+  background: #f6ecd7;
+  overflow: hidden;
+}
+.cafe-art img {position: absolute; inset: 0; height: 100%; object-fit: cover}
+.gallery-figure .cafe-art-caption {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 36px;
+  min-width: 0;
+  margin: 0;
+  padding: 10% 8% 16%;
+  color: #251f18;
+}
+.cafe-art-seal {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  padding: 6px 4px;
+  border: 1px solid #9f8968;
+  background: #f8f0df;
+  color: #352719;
+  font: 700 1rem/1.2 var(--serif);
+  letter-spacing: .09em;
+}
+.cafe-art-copy {display: grid; gap: 7px; max-width: 98%}
+.cafe-art-label {font: 680 .83rem/1.35 var(--sans)}
+.community-gallery .cafe-art-label :is(.saju-term, .saju-term-trigger) {color: #65462e}
+.cafe-art-title {
+  font: 800 clamp(1.35rem, 6.6vw, 1.93rem)/1.32 var(--serif);
+  letter-spacing: -.045em;
+  white-space: pre-line;
+}
+.cafe-art-body {max-width: 32ch; font: 500 clamp(.82rem, 3.6vw, .9rem)/1.52 var(--sans); color: #51412f}
 .gallery-votes {margin-top: 22px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px}
 .gallery-votes button {
   display: inline-flex;

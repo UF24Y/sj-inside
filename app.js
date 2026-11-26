@@ -585,9 +585,24 @@ function annotatedChart(annotation,pillars,route,hourProvisional=true){
   </figure>`;
 }
 function postPicture(image,route){
-  const {src,alt,caption,after,width=1536,height=1024}=image;
+  const {src,alt,caption,lettering,after,width=1536,height=1024}=image;
+  const picture=`<img src="${esc(src)}" alt="${esc(alt)}" width="${esc(width)}" height="${esc(height)}" decoding="async">`;
+  if(lettering){
+    const {seal,label,title,body}=lettering;
+    return `<figure class="gallery-figure cafe-art">
+      ${picture}
+      <figcaption class="cafe-art-caption">
+        <span class="cafe-art-seal" lang="ko-Hani" aria-hidden="true">${esc(seal)}</span>
+        <div class="cafe-art-copy">
+          ${label?`<span class="cafe-art-label">${galleryText(label,route,{literal:true,ask:true})}</span>`:''}
+          <strong class="cafe-art-title">${esc(title)}</strong>
+          <p class="cafe-art-body">${esc(body)}</p>
+        </div>
+      </figcaption>
+    </figure>`;
+  }
   const figureClass=after===undefined?'gallery-figure':'gallery-figure gallery-figure-inline';
-  return `<figure class="${figureClass}"><img src="${esc(src)}" alt="${esc(alt)}" width="${esc(width)}" height="${esc(height)}" decoding="async">${caption?`<figcaption>${galleryText(caption,route,{literal:true,ask:true})}</figcaption>`:''}</figure>`;
+  return `<figure class="${figureClass}">${picture}${caption?`<figcaption>${galleryText(caption,route,{literal:true,ask:true})}</figcaption>`:''}</figure>`;
 }
 function postPage(post,route){
   const collection=postsCollection(route);
