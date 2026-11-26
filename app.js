@@ -220,28 +220,34 @@ function cafeBoardNav(progress,current){
       ${board.label}${open?'':icon('lock',13)}</a>`;
   }).join('')}</nav>`;
 }
-function galleryBar(route,boardId){
-  const name=route==='gallery'?'':galleryDisplayName(route);
-  const title=cafeTitle(name);
-  const titleLink=`<a class="gallery-name" href="#${route}">${esc(title)}</a>`;
-  if(config.demoOnly){
-    const progress=demoReading.progress;
-    const exit='<a class="board-link demo-exit" href="#home">나가기</a>';
-    if(activePost){
-      const id=progress.boardOf(activePost.id);
-      return `<header class="cafe-threadbar gallery-tools">
-        <a class="cafe-back" href="${cafeBoardLink(id)}">‹ ${cafeBoardById.get(id).label}</a>${titleLink}${exit}
-      </header>`;
-    }
-    return `<header class="cafe-masthead">
+function cafeLayout(contents,boardId,{article=false}={}){
+  const title=esc(cafeTitle(demoReading.displayName));
+  const progress=demoReading.progress;
+  const exit='<a class="board-link demo-exit" href="#home">나가기</a>';
+  return `<div class="reportwrap gallery-wrap community-gallery cafe-layout ${article?'gallery-thread cafe-open-post':'cafe-home'}">
+    <aside class="cafe-masthead cafe-sidebar" aria-label="카페 정보 및 게시판">
+      <h2 class="cafe-sidebar-heading">카페 정보</h2>
       <div class="cafe-brandbar">
-        <a class="cafe-brand gallery-name" href="#${route}">${esc(title)}</a>${exit}
+        <a class="cafe-brand gallery-name" href="#demo-reading">${title}</a>${exit}
       </div>
       <div class="cafe-membership" aria-label="등업 안내"><strong>${cafeRanks[progress.tier]}</strong>
         <span>${cafeRankGuidance[progress.tier]}</span></div>
+      <h2 class="cafe-sidebar-heading">게시판</h2>
       ${cafeBoardNav(progress,boardId)}
-    </header>`;
-  }
+    </aside>
+    <div class="cafe-main">
+      ${article?`<header class="cafe-threadbar gallery-tools">
+        <a class="cafe-back" href="${cafeBoardLink(boardId)}">‹ ${cafeBoardById.get(boardId).label}</a>
+        <span class="cafe-thread-name">${title}</span>${exit}
+      </header>`:''}
+      ${contents}
+    </div>
+  </div>`;
+}
+function galleryBar(route){
+  const name=route==='gallery'?'':galleryDisplayName(route);
+  const title=cafeTitle(name);
+  const titleLink=`<a class="gallery-name" href="#${route}">${esc(title)}</a>`;
   return `<div class="gallery-band">${titleLink}<span>${icon('lock',14)} ${route==='demo-reading'?'데모':'비공개'} · 가상 카페</span></div>`;
 }
 const positiveReaction=route=>isReadingRoute(route)?'공감':'추천';
@@ -340,17 +346,20 @@ function readingNoticePage(route,post){
   const {comments,next}=postDiscussion(post,route);
   const summary=route==='demo-reading'?`<p class="demo-reading-summary">${esc(collection.calculationSummary)}</p>`:'';
   const firstLink=first&&!config.demoOnly?button(`${route}/${esc(first.id)}`,'첫 글 읽기','arrow'):'';
-  return `<div class="reportwrap gallery-wrap gallery-thread community-gallery">
-    ${galleryBar(route)}
-    ${config.demoOnly?'':`<div class="gallery-tools"><a class="button light compact" href="#${route}">‹ 목록</a></div>`}
-    <article class="gallery-post">
+  const contents=`<article class="gallery-post">
       <header class="gallery-post-header"><span class="tag filled">공지</span><h1>${readingNoticeTitle}</h1>
         <div class="gallery-post-meta"><strong>${cafeAuthor(post,route)}</strong></div>
       </header>
       <div class="gallery-post-body reading-notice-body">${summary}${readingNoticeCopy(true)}${firstLink}</div>
     </article>
-    ${comments}
-    ${config.demoOnly?`<div id="reading-next-slot" aria-live="polite">${next}</div>`:''}
+    ${comments}`;
+  if(config.demoOnly){
+    return cafeLayout(`${contents}<div id="reading-next-slot" aria-live="polite">${next}</div>`,'notice',{article:true});
+  }
+  return `<div class="reportwrap gallery-wrap gallery-thread community-gallery">
+    ${galleryBar(route)}
+    <div class="gallery-tools"><a class="button light compact" href="#${route}">‹ 목록</a></div>
+    ${contents}
   </div>`;
 }
 function demoBoardList(boardId){
@@ -366,15 +375,13 @@ function demoBoardList(boardId){
         <p>${cafeRankGuidance[board.level-1]}</p>
         <a class="board-link" href="${cafeBoardLink(progress.recommendedBoard)}">읽을 글로 이동 ${icon('arrow',14)}</a>
       </div>`;
-  return `<div class="reportwrap gallery-wrap community-gallery cafe-home">${galleryBar('demo-reading',boardId)}
-    <section class="gallery-index" aria-labelledby="cafe-board-title">
+  return cafeLayout(`<section class="gallery-index" aria-labelledby="cafe-board-title">
       <header class="cafe-board-head">
         <h1 class="cafe-board-heading" id="cafe-board-title">${board.label}</h1>
         ${open?`<span class="cafe-board-count">읽음 ${count.read}/${count.total}</span>`:''}
       </header>
       ${rows}
-    </section>
-  </div>`;
+    </section>`,boardId);
 }
 function postsList(route){
   const entries=[];
@@ -598,10 +605,7 @@ function postPage(post,route){
   const guideAction=staged?`<button type="button" class="button light compact reading-guide-trigger" data-action="reading-guide">${icon('info',15)} 이용 방법</button>`:'';
   const shareAction=`<button type="button" class="button light compact" data-action="share">${icon('copy',16)} 비식별 공유본</button>`;
   const reactions=voteBar(post,route);
-  return `<div class="reportwrap gallery-wrap gallery-thread community-gallery">
-    ${galleryBar(route)}
-    ${config.demoOnly?'':`<div class="gallery-tools"><a class="button light compact" href="#${route}">‹ 목록</a>${guideAction}${shareAction}</div>`}
-    <article class="gallery-post">
+  const contents=`<article class="gallery-post">
       <header class="gallery-post-header">
         <span class="tag filled">${esc(post.tag)}</span>${chapter&&chapter.title!==post.tag?` <span class="reading-chapter">${esc(chapter.title)}</span>`:''}
         <h1>${galleryText(post.title,route,{ask:true})}</h1>
@@ -614,8 +618,13 @@ function postPage(post,route){
       ${config.demoOnly?`<div class="cafe-post-actions">${reactions}${guideAction}${shareAction}</div>`:''}
     </article>
     ${comments}
-    ${staged?`<div id="reading-next-slot" aria-live="polite">${next}</div>`:threadLinks(post,route)}
-    ${config.demoOnly?'':`<div class="postactions"><a class="button light" href="#${route}">글 목록</a></div>`}
+    ${staged?`<div id="reading-next-slot" aria-live="polite">${next}</div>`:threadLinks(post,route)}`;
+  if(config.demoOnly)return cafeLayout(contents,demoReading.progress.boardOf(post.id),{article:true});
+  return `<div class="reportwrap gallery-wrap gallery-thread community-gallery">
+    ${galleryBar(route)}
+    <div class="gallery-tools"><a class="button light compact" href="#${route}">‹ 목록</a>${guideAction}${shareAction}</div>
+    ${contents}
+    <div class="postactions"><a class="button light" href="#${route}">글 목록</a></div>
   </div>`;
 }
 function showDialog(html){
