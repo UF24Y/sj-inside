@@ -237,7 +237,7 @@ function cafeBanner(title,pillar){
   return `<header class="cafe-banner">
     <img src="${esc(src)}" alt="${esc(banner?.alt)}" decoding="async">
     <div class="cafe-banner-copy">
-      <a class="cafe-banner-title" href="#demo-reading">${title}</a>
+      <a class="cafe-banner-title gallery-name" href="#demo-reading">${title}</a>
       ${banner?`<span class="cafe-banner-pillar">${esc(pillar)} <span lang="ko-Hani">(${banner.hanja})</span></span>`:''}
     </div>
   </header>`;
@@ -245,27 +245,26 @@ function cafeBanner(title,pillar){
 function cafeLayout(contents,boardId,{article=false,view}={}){
   const title=esc(cafeTitle(demoReading.displayName));
   const progress=demoReading.progress;
-  const exit='<a class="board-link demo-exit" href="#home">나가기</a>';
-  return `<div class="reportwrap gallery-wrap community-gallery cafe-layout ${article?'gallery-thread cafe-open-post':'cafe-home'}">
+  const menuOpen=Boolean(demoReading.boardMenuOpen);
+  return `<div class="reportwrap gallery-wrap community-gallery cafe-layout ${article?'gallery-thread':'cafe-home'}">
     ${cafeBanner(title,demoReading.pillars?.day)}
-    <nav class="cafe-home-bar" aria-label="카페 홈 메뉴">
-      <a href="#demo-reading"${view==='home'?' aria-current="page"':''}>카페 홈</a>
-      <a href="#demo-reading/all"${view==='all'?' aria-current="page"':''}>전체글보기</a>
-    </nav>
-    <aside class="cafe-masthead cafe-sidebar" aria-label="카페 정보 및 게시판">
-      <h2 class="cafe-sidebar-heading">카페 정보</h2>
-      <div class="cafe-brandbar">
-        <a class="cafe-brand gallery-name" href="#demo-reading">${title}</a>${exit}
+    <div class="cafe-mobile-menu">
+      <nav class="cafe-home-bar" aria-label="카페 홈 메뉴">
+        <a href="#demo-reading"${view==='home'?' aria-current="page"':''}>카페 홈</a>
+        <a href="#demo-reading/all"${view==='all'?' aria-current="page"':''}>전체글보기</a>
+        <button class="cafe-board-toggle" type="button" data-action="toggle-cafe-board-panel"
+          aria-expanded="${menuOpen}" aria-controls="cafe-board-panel">게시판 ${icon('arrow',12)}</button>
+        <a class="demo-exit" href="#home">나가기</a>
+      </nav>
+      <div class="cafe-board-panel" id="cafe-board-panel"${menuOpen?'':' hidden'}>
+        <section class="cafe-membership" aria-label="등업 안내"><strong>${cafeRanks[progress.tier]}</strong>
+          <span>${cafeRankGuidance[progress.tier]}</span></section>
+        ${cafeBoardNav(progress,boardId)}
       </div>
-      <div class="cafe-membership" aria-label="등업 안내"><strong>${cafeRanks[progress.tier]}</strong>
-        <span>${cafeRankGuidance[progress.tier]}</span></div>
-      <h2 class="cafe-sidebar-heading">게시판</h2>
-      ${cafeBoardNav(progress,boardId)}
-    </aside>
+    </div>
     <div class="cafe-main">
       ${article?`<header class="cafe-threadbar gallery-tools">
         <a class="cafe-back" href="${cafeBoardLink(boardId)}">‹ ${cafeBoardById.get(boardId).label}</a>
-        <span class="cafe-thread-name">${title}</span>${exit}
       </header>`:''}
       ${contents}
     </div>
@@ -981,6 +980,7 @@ function route(scroll=true){
   if(!['birth','records','demo','result','reading','demo-reading','home','connect','youtube','gallery','library'].includes(key))key='home';
   let demoBoard,cafeView='home';
   if(config.demoOnly&&key==='demo-reading'){
+    if(scroll)demoReading.boardMenuOpen=false;
     const progress=demoReading.progress;
     demoBoard=progress.recommendedBoard;
     if(postId==='board'){
@@ -1151,6 +1151,13 @@ main.addEventListener('submit',async event=>{
 document.addEventListener('click',async e=>{
   const node=e.target.closest('[data-action],[data-vote],[data-gallery-topic]');if(!node)return;
   const act=node.dataset.action;
+  if(act==='toggle-cafe-board-panel'){
+    const panel=$('#cafe-board-panel',main);
+    demoReading.boardMenuOpen=panel.hidden;
+    panel.hidden=!demoReading.boardMenuOpen;
+    node.setAttribute('aria-expanded',String(demoReading.boardMenuOpen));
+    return;
+  }
   if(act==='confirm-cafe-read'&&config.demoOnly&&activePost){confirmCafeRead();return;}
   if(node.hasAttribute('data-gallery-topic')){
     const key=topicKey(location.hash.slice(1));

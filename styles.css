@@ -784,36 +784,36 @@ body:has(.community-gallery) .navcta:hover {background: #164c3a; border-color: #
   .gallery-list-main .gallery-list-title {font-size: .92rem}
 }
 
-/* Cafe surfaces, membership and board navigation */
-body:has(.cafe-home, .cafe-threadbar) {
+/* Named cafe layout and board navigation */
+body:has(.cafe-layout) {
   --paper: #f8f9f8;
   --ink: #242a27;
   --pine: #267452;
 }
-.community-gallery:has(.cafe-masthead, .cafe-threadbar) {
-  --gallery-gutter: clamp(14px, 3.4vw, 25px);
+#main.wrap:has(> .cafe-layout) {width: min(100%, 480px)}
+.community-gallery.cafe-layout {
+  --gallery-gutter: 14px;
   --board-rule: #e2e7e3;
   --board-tint: #f7f9f7;
   --board-accent-soft: #e9f4ee;
   --muted: #58655e;
   --pine: #267452;
   --ink: #242a27;
-  max-width: 790px;
+  min-height: 100svh;
+  padding: 0 0 28px;
+  background: var(--panel);
+  container-type: inline-size;
 }
 .cafe-banner {
   position: relative;
   isolation: isolate;
-  grid-column: 1 / -1;
   display: grid;
   align-content: center;
   min-width: 0;
-  min-height: 165px;
-  aspect-ratio: 3.2;
-  margin-bottom: 12px;
-  padding: clamp(18px, 4vw, 52px);
+  min-height: clamp(100px, 31cqw, 150px);
+  padding: 13px var(--gallery-gutter);
   overflow: hidden;
-  border: 1px solid #d3c4ac;
-  border-radius: 9px;
+  border-bottom: 1px solid #d3c4ac;
   background: #f3e8d3;
   color: #342a21;
 }
@@ -822,57 +822,61 @@ body:has(.cafe-home, .cafe-threadbar) {
 .cafe-banner::after {
   content: '';
   pointer-events: none;
-  background: linear-gradient(90deg, #f8efdeef, #f8efdec7 34%, #f8efde73 66%, #f8efde00 92%);
+  background: linear-gradient(90deg, #f8efdef2, #f8efdec7 52%, #f8efde8c 83%, #f8efde30);
 }
 .cafe-banner-copy {
   position: relative;
   z-index: 1;
   display: grid;
   justify-items: start;
-  gap: 9px;
-  max-width: min(70%, 40rem);
-}
-.cafe-banner-title {
+  gap: 4px;
   max-width: 100%;
-  font: 760 clamp(1.32rem, 3.6vw, 3.05rem)/1.17 var(--serif);
+}
+.community-gallery .cafe-banner-title {
+  max-width: 100%;
+  font: 760 clamp(1.32rem, 5.5cqw, 1.72rem)/1.17 var(--serif);
   letter-spacing: -.055em;
   overflow-wrap: anywhere;
 }
 .cafe-banner-title:hover {text-decoration: underline; text-underline-offset: .15em}
-.cafe-banner-pillar {color: #584534; font: 650 clamp(.83rem, 1.4vw, 1rem)/1.5 var(--serif)}
+.cafe-banner-pillar {color: #584534; font: 650 .86rem/1.5 var(--serif)}
 .cafe-banner-pillar > span {margin-inline-start: 2px}
 .cafe-home-bar {
-  grid-column: 1 / -1;
   display: flex;
-  flex-wrap: wrap;
   align-items: stretch;
-  gap: 0 12px;
-  min-height: 39px;
-  padding-inline: 10px;
-  border: 1px solid var(--board-rule);
+  gap: 0 2px;
+  padding-inline: 6px;
+  border-bottom: 1px solid var(--board-rule);
   background: var(--panel);
 }
-.cafe-home-bar a {
+.cafe-home-bar :is(a, button) {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 39px;
-  padding-inline: 9px;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+  padding-inline: 8px;
   color: var(--muted);
-  font-size: .84rem;
+  font-size: .82rem;
   font-weight: 650;
+  white-space: nowrap;
 }
-.cafe-home-bar a:hover, .cafe-home-bar a[aria-current="page"] {color: var(--pine)}
-.cafe-home-bar a[aria-current="page"] {box-shadow: inset 0 -2px var(--pine)}
-.cafe-home-bar a:focus-visible {outline-offset: -3px}
-.cafe-overview {display: grid; gap: clamp(15px, 2.1vw, 25px); min-width: 0}
+.cafe-home-bar .demo-exit {margin-inline-start: auto; font-size: .79rem; font-weight: 550}
+.cafe-home-bar :is(a, button):hover, .cafe-home-bar [aria-current="page"] {color: var(--pine)}
+.cafe-home-bar [aria-current="page"] {box-shadow: inset 0 -2px var(--pine)}
+.cafe-home-bar :is(a, button):focus-visible {outline-offset: -3px}
+.cafe-board-toggle[aria-expanded="true"] {background: var(--board-tint); color: var(--pine)}
+.cafe-board-toggle svg {transform: rotate(90deg)}
+.cafe-board-toggle[aria-expanded="true"] svg {transform: rotate(-90deg)}
+.cafe-board-panel {border-bottom: 1px solid var(--board-rule); background: var(--panel)}
+.cafe-overview {display: grid; gap: 15px; min-width: 0; padding: 12px var(--gallery-gutter) 0}
 .cafe-feature {
-  --feature-frame: 6px;
-  --feature-image-width: 32%;
+  --feature-frame: 4px;
+  --feature-image-width: 26%;
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  min-height: 148px;
+  min-height: 131px;
   padding: var(--feature-frame);
   padding-inline-end: var(--feature-image-width);
   overflow: hidden;
@@ -886,7 +890,7 @@ body:has(.cafe-home, .cafe-threadbar) {
   justify-items: start;
   gap: 4px;
   min-width: 0;
-  padding: 15px clamp(12px, 2.1vw, 25px);
+  padding: 12px;
   background: #f5f1e7;
 }
 .cafe-feature-image {
@@ -899,13 +903,13 @@ body:has(.cafe-home, .cafe-threadbar) {
   object-position: 64% 32%;
 }
 .cafe-feature-label {color: var(--pine); font-size: .74rem; font-weight: 750}
-.cafe-feature-title {font-size: clamp(1.05rem, 2.3vw, 1.52rem); font-weight: 790; letter-spacing: -.042em; line-height: 1.28}
+.cafe-feature-title {font-size: clamp(1.15rem, 4.6cqw, 1.37rem); font-weight: 790; letter-spacing: -.042em; line-height: 1.28}
 .cafe-feature-text {color: var(--muted); font-size: .81rem; line-height: 1.5}
 .cafe-feature-action {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-height: 28px;
+  min-height: 44px;
   margin: 2px 0 0 -6px;
   padding: 0 6px;
   border-radius: 3px;
@@ -918,12 +922,12 @@ body:has(.cafe-home, .cafe-threadbar) {
 @media (prefers-reduced-motion: reduce) {
   .cafe-feature.demo-notice-arriving, .cafe-feature-action.demo-notice-unread {animation: none}
 }
-.cafe-board-digest {display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 17px 15px}
+.cafe-board-digest {display: grid; grid-template-columns: minmax(0, 1fr); gap: 13px}
 .cafe-digest-section {min-width: 0; background: var(--panel)}
 .cafe-digest-head {display: flex; align-items: baseline; justify-content: space-between; gap: 5px 8px; padding: 0 2px 6px}
 .cafe-digest-head :is(h2, strong) {font-size: .93rem; font-weight: 770; letter-spacing: -.02em}
 .cafe-digest-head a:hover {color: var(--pine); text-decoration: underline}
-.cafe-digest-head > a, .cafe-digest-head > small {color: var(--muted); font-size: .75rem}
+.cafe-digest-head > a {min-height: 32px; color: var(--muted); font-size: .75rem}
 .cafe-digest-section .gallery-rows, .cafe-digest-lock, .cafe-digest-empty {border-top: 1px solid #839189}
 :is(.cafe-digest-lock, .cafe-digest-empty) {
   display: flex;
@@ -947,48 +951,14 @@ body:has(.cafe-home, .cafe-threadbar) {
 .cafe-digest-section .gallery-list-meta {font-size: .74rem}
 .cafe-digest-section .gallery-list-meta :is(.gallery-list-views, .gallery-list-votes) {display: none}
 .cafe-home .cafe-digest-section .gallery-list-title {font-size: .86rem}
-.cafe-masthead {
-  margin-bottom: 12px;
-  border: 1px solid var(--board-rule);
-  border-radius: 9px;
-  background: var(--panel);
-}
 .cafe-main {min-width: 0}
-.cafe-sidebar-heading {display: none}
-.cafe-brandbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 46px;
-  padding: 0 var(--gallery-gutter);
-}
-.community-gallery .cafe-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  min-height: 44px;
-  color: var(--ink);
-  font-size: clamp(1.02rem, 2.5vw, 1.22rem);
-  font-weight: 730;
-}
-.cafe-brandbar .demo-exit, .cafe-threadbar .demo-exit {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  color: var(--muted);
-  font-size: .77rem;
-  font-weight: 550;
-  white-space: nowrap;
-}
 .cafe-membership {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 3px 8px;
   margin: 0;
-  padding: 0 var(--gallery-gutter) 12px;
+  padding: 10px var(--gallery-gutter);
   color: var(--muted);
   font-size: .79rem;
   line-height: 1.5;
@@ -1003,12 +973,11 @@ body:has(.cafe-home, .cafe-threadbar) {
 }
 .cafe-board-nav {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 0 8px;
   border-top: 1px solid var(--board-rule);
   color: var(--muted);
-  font-size: .82rem;
+  font-size: .8rem;
 }
 .cafe-board-nav > a {
   display: flex;
@@ -1016,13 +985,14 @@ body:has(.cafe-home, .cafe-threadbar) {
   align-items: center;
   gap: 4px;
   min-width: 0;
-  min-height: 40px;
+  min-height: 44px;
   padding: 6px 3px;
   line-height: 1.35;
   text-align: center;
   overflow-wrap: anywhere;
 }
 .cafe-board-nav > a svg {flex: none; width: 13px; height: 13px}
+.cafe-board-nav > :nth-child(n+5) {border-top: 1px solid var(--board-rule)}
 .cafe-board-nav a.cafe-board-locked {color: #606c64}
 .cafe-board-nav .cafe-board-done {color: #2d6350}
 .cafe-board-nav .cafe-board-done:not(:has(svg))::after {
@@ -1036,7 +1006,8 @@ body:has(.cafe-home, .cafe-threadbar) {
 .cafe-board-nav a[aria-current="page"] {background: #f1f7f3; box-shadow: inset 0 -2px var(--pine); color: var(--pine); font-weight: 750}
 .cafe-board-nav a:hover {background: var(--board-tint); color: var(--pine)}
 .cafe-board-nav a:focus-visible {outline-offset: -2px}
-.cafe-home .gallery-index {border-radius: 9px}
+.community-gallery.cafe-layout :is(.gallery-index, .gallery-post, .gallery-comments) {border-inline: 0; border-radius: 0}
+.cafe-layout :is(.gallery-index, .gallery-post) {border-top: 0}
 .cafe-home h1.cafe-board-heading {
   margin: 0;
   padding: 14px var(--gallery-gutter) 10px;
@@ -1100,36 +1071,31 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
 .cafe-home .gallery-pinned-row .gallery-list-type, .cafe-home .gallery-pinned-row .gallery-list-title strong {color: var(--pine)}
 
 .community-gallery .cafe-threadbar {
-  display: grid;
-  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(max-content, 1fr);
+  display: flex;
   align-items: center;
-  column-gap: 10px;
-  min-height: 46px;
-  margin: 0 0 8px;
+  margin: 0;
   padding: 0 var(--gallery-gutter);
   border-bottom: 1px solid var(--board-rule);
   background: var(--panel);
 }
-.cafe-threadbar .cafe-back, .cafe-threadbar .demo-exit {
+.cafe-threadbar .cafe-back {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  width: fit-content;
-  min-height: 40px;
+  min-height: 44px;
   color: var(--muted);
   font-size: .8rem;
   font-weight: 600;
 }
-.cafe-threadbar .demo-exit {justify-self: end}
-.community-gallery .cafe-threadbar .cafe-thread-name {
-  overflow: hidden;
-  color: var(--ink);
-  font-size: .91rem;
-  font-weight: 690;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.cafe-layout .gallery-post h1 {font-size: clamp(1.23rem, 5.25cqw, 1.58rem)}
+.cafe-layout .gallery-post-meta {gap: 0 7px; font-size: .74rem}
+.cafe-layout :is(.gallery-byline, .gallery-post-stats) {gap: 7px}
+.cafe-layout .gallery-opening {font-size: .96rem}
+.cafe-layout .thread-chart-columns {gap: 1px}
+.cafe-layout .thread-chart-columns li {width: min(14cqw, 58px)}
+.cafe-layout .thread-chart-label {font-size: .65rem}
+.cafe-layout .cafe-art-title {font-size: clamp(1.35rem, 6.6cqw, 1.93rem)}
+.cafe-layout .cafe-art-body {font-size: clamp(.82rem, 3.6cqw, .9rem)}
+.cafe-layout .gallery-write-reply {min-width: 44px; min-height: 44px}
 .cafe-author {display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; vertical-align: middle}
 .cafe-avatar {
   --avatar-bg: #ebefec;
@@ -1158,7 +1124,7 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
 .cafe-post-actions .gallery-votes {justify-content: flex-start; align-items: center; gap: 6px; margin: 0}
 .cafe-post-actions .gallery-votes button, .cafe-post-actions .button {
   min-width: 0;
-  min-height: 34px;
+  min-height: 44px;
   padding: 4px 8px;
   border: 1px solid var(--board-rule);
   border-radius: 6px;
@@ -1174,8 +1140,8 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px 16px;
-  margin: 12px 0;
-  padding: 13px var(--gallery-gutter);
+  margin: 12px var(--gallery-gutter);
+  padding: 12px;
   border: 1px solid var(--board-rule);
   border-radius: 8px;
   background: var(--panel);
@@ -1186,7 +1152,7 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
 .cafe-reading-progress :is(strong, b) {color: var(--ink)}
 .cafe-reading-progress button {
   flex: none;
-  min-height: 40px;
+  min-height: 44px;
   padding: 6px 13px;
   border: 1px solid var(--pine);
   border-radius: 6px;
@@ -1197,91 +1163,3 @@ span.cafe-row-read {background: #edf1ee; color: #506357}
 }
 .cafe-reading-progress button:hover {background: #205f45}
 .cafe-reading-progress button:disabled {border-color: var(--board-rule); background: var(--board-tint); color: var(--muted); opacity: 1}
-@media (min-width: 900px) {
-  #main.wrap:has(> .cafe-layout) {width: min(1100px, calc(100% - 56px))}
-  .community-gallery.cafe-layout {
-    display: grid;
-    grid-template-columns: 210px minmax(0, 1fr);
-    gap: 20px;
-    align-items: start;
-    max-width: none;
-  }
-  .cafe-banner {margin-bottom: 0}
-  .cafe-layout > .cafe-home-bar {margin-block: -12px -6px}
-  .cafe-layout > .cafe-sidebar {
-    margin: 0;
-    padding: 0 0 7px;
-    border-top: 2px solid var(--pine);
-  }
-  .cafe-sidebar-heading {
-    display: block;
-    margin: 0;
-    padding: 9px 14px;
-    border-block: 1px solid var(--board-rule);
-    background: var(--board-tint);
-    color: var(--ink);
-    font-size: .8rem;
-    font-weight: 730;
-    line-height: 1.4;
-  }
-  .cafe-sidebar-heading:first-child {border-top: 0; border-radius: 8px 8px 0 0}
-  .cafe-sidebar .cafe-brandbar {gap: 6px; padding: 8px 12px 4px 14px}
-  .cafe-sidebar .gallery-name {min-height: 31px; color: var(--ink); font-size: 1rem; line-height: 1.4; overflow-wrap: anywhere}
-  .cafe-sidebar .demo-exit {min-height: 32px; font-size: .73rem}
-  .cafe-sidebar .cafe-membership {align-items: start; flex-direction: column; gap: 6px; padding: 3px 14px 14px; font-size: .76rem}
-  .cafe-sidebar .cafe-board-nav {grid-template-columns: 1fr; padding: 6px; border: 0}
-  .cafe-sidebar .cafe-board-nav > a {
-    justify-content: flex-start;
-    min-height: 36px;
-    padding: 7px 10px;
-    border-radius: 4px;
-    text-align: start;
-    font-weight: 560;
-  }
-  .cafe-sidebar .cafe-board-nav > a svg, .cafe-sidebar .cafe-board-done::after {margin-inline-start: auto}
-  .cafe-sidebar .cafe-board-nav > a[aria-current="page"] {box-shadow: inset 3px 0 var(--pine); color: var(--pine); font-weight: 720}
-  .cafe-open-post .cafe-threadbar .demo-exit {display: none}
-}
-@media (min-width: 900px) and (min-height: 610px) {
-  .cafe-layout > .cafe-sidebar {position: sticky; top: 14px; max-height: calc(100svh - 28px); overflow-y: auto; scrollbar-width: thin}
-}
-@media (max-width: 899.98px) {
-  .cafe-layout > .cafe-home-bar {margin-bottom: 12px}
-  .cafe-open-post > .cafe-sidebar {display: none}
-}
-@media (max-width: 760px) {
-  .cafe-banner {
-    min-height: clamp(100px, 31vw, 165px);
-    aspect-ratio: auto;
-    padding: 13px var(--gallery-gutter);
-  }
-  .cafe-banner::after {
-    background: linear-gradient(90deg, #f8efdef2, #f8efdec7 52%, #f8efde8c 83%, #f8efde30);
-  }
-  .cafe-banner-copy {max-width: 100%; gap: 4px}
-  .cafe-board-nav {grid-template-columns: repeat(4, minmax(0, 1fr))}
-  .cafe-board-nav > :nth-child(n+5) {border-top: 1px solid var(--board-rule)}
-}
-@media (max-width: 590px) {
-  body.isolated-demo:has(.cafe-home, .cafe-threadbar) {background: var(--panel)}
-  body.isolated-demo #main:has(.cafe-home, .cafe-threadbar) {width: 100%}
-  .community-gallery:has(.cafe-masthead, .cafe-threadbar) {padding-top: 0}
-  .cafe-banner {margin-bottom: 0; border-inline: 0; border-radius: 0}
-  .cafe-layout > .cafe-home-bar {margin: 0; border: 0; border-bottom: 1px solid var(--board-rule)}
-  .cafe-masthead, .cafe-home .gallery-index, .gallery-thread:has(.cafe-threadbar) .gallery-post,
-  .gallery-thread:has(.cafe-threadbar) .gallery-comments {border-inline: 0; border-radius: 0}
-  .cafe-masthead {border-top: 0; margin-bottom: 0}
-  .cafe-home .gallery-index {border-top: 0}
-  .community-gallery .cafe-threadbar {margin-bottom: 0}
-  .gallery-thread:has(.cafe-threadbar) .gallery-post {border-top: 0}
-  .cafe-reading-progress {margin-inline: var(--gallery-gutter); padding: 12px}
-}
-@media (max-width: 540px) {
-  .cafe-overview {padding: 12px var(--gallery-gutter) 0}
-  .cafe-feature {--feature-frame: 4px; --feature-image-width: 26%; min-height: 131px}
-  .cafe-feature-copy {padding-block: 12px}
-  .cafe-board-digest {grid-template-columns: minmax(0, 1fr); gap: 13px}
-}
-@media (max-width: 390px) {
-  .cafe-board-nav > a {min-height: 38px; font-size: .78rem}
-}
