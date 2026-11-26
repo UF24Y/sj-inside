@@ -576,13 +576,18 @@ function annotatedChart(annotation,pillars,route,hourProvisional=true){
     <figcaption>${galleryText(annotation.caption,route,{ask:true})}</figcaption>
     <ul class="thread-chart-columns" aria-label="글에서 짚은 사주 글자">
       ${columns.map(({key,label,value})=>`<li>
-        <span class="thread-chart-label">${esc(label)}${key==='hour'&&hourProvisional?'<small>시주 잠정</small>':''}</span>
+        <span class="thread-chart-label">${esc(label)}${key==='hour'&&hourProvisional?'<small>임시 계산</small>':''}</span>
         <span class="thread-chart-pair${marked(key)}">
           ${[...value].map((letter,index)=>`<span class="thread-chart-letter${marked(key+(index===0?'-stem':'-branch'))}">${esc(letter)}</span>`).join('')}
         </span>
         <span class="thread-chart-reading">${highlightSajuTerms(value,true)}</span></li>`).join('')}
     </ul>
   </figure>`;
+}
+function postPicture(image,route){
+  const {src,alt,caption,after,width=1536,height=1024}=image;
+  const figureClass=after===undefined?'gallery-figure':'gallery-figure gallery-figure-inline';
+  return `<figure class="${figureClass}"><img src="${esc(src)}" alt="${esc(alt)}" width="${esc(width)}" height="${esc(height)}" decoding="async">${caption?`<figcaption>${galleryText(caption,route,{literal:true,ask:true})}</figcaption>`:''}</figure>`;
 }
 function postPage(post,route){
   const collection=postsCollection(route);
@@ -591,17 +596,22 @@ function postPage(post,route){
   const mode=collection.mode;
   const chapters=readingChapters(collection);
   const chapter=post.chapterId?chapters.find(item=>item.id===post.chapterId):chapters.findLast(item=>item.start<=collection.posts.indexOf(post));
-  const paragraphs=post.body.trim().split(/\n{2,}/).filter(Boolean).map(paragraph=>`<p class="gallery-opening">${galleryText(paragraph,route,{ask:true})}</p>`);
+  const paragraphs=post.body.trim().split(/\n{2,}/).filter(Boolean);
+  const picture=post.image?postPicture(post.image,route):'';
+  const chart=staged&&post.annotation?annotatedChart(post.annotation,collection.pillars,route,collection.hourProvisional):'';
+  const inlineChart=Boolean(chart)&&(chapter===chapters[0]||!paragraphs.length);
+  const blocks=paragraphs.map(paragraph=>`<p class="gallery-opening">${galleryText(paragraph,route,{ask:true})}</p>`);
   let chartDetails='';
-  if(staged&&post.annotation){
-    const figure=annotatedChart(post.annotation,collection.pillars,route,collection.hourProvisional);
-    if(chapter===chapters[0]||!paragraphs.length)paragraphs.splice(post.annotation.after??1,0,figure);
-    else chartDetails=`<details class="reading-reference reading-chart-details"><summary>이 풀이에 쓴 사주표 보기</summary>${figure}</details>`;
+  const chartPosition=post.annotation?.after??1;
+  if(inlineChart)blocks.splice(chartPosition,0,chart);
+  else if(chart)chartDetails=`<details class="reading-reference reading-chart-details"><summary>이 풀이에 쓴 사주표 보기</summary>${chart}</details>`;
+  const imagePosition=post.image?.after;
+  if(picture&&imagePosition!==undefined){
+    blocks.splice(imagePosition+Number(inlineChart&&chartPosition<imagePosition),0,picture);
   }
   const reference=post.respondsTo?`<a class="thread-quote" href="#${route}/${esc(post.respondsTo.id)}">↳ ${galleryText(post.respondsTo.text,route,{literal:true})}</a>`:'';
   const related=reference&&staged?`<details class="reading-reference"><summary>앞 글 참고</summary>${reference}</details>`:reference;
-  const body=paragraphs.join('')+chartDetails;
-  const picture=post.image?`<figure class="gallery-figure"><img src="${esc(post.image.src)}" alt="${esc(post.image.alt)}" width="1536" height="1024"><figcaption>${galleryText(post.image.caption,route,{literal:true,ask:true})}</figcaption></figure>`:'';
+  const body=blocks.join('')+chartDetails;
   const guideAction=staged?`<button type="button" class="button light compact reading-guide-trigger" data-action="reading-guide">${icon('info',15)} 이용 방법</button>`:'';
   const shareAction=`<button type="button" class="button light compact" data-action="share">${icon('copy',16)} 비식별 공유본</button>`;
   const reactions=voteBar(post,route);
@@ -614,7 +624,7 @@ function postPage(post,route){
             <button type="button" class="gallery-jump" data-action="jump-comments">댓글 ${visibleCommentCount(post,route)}</button></div>
         </div>
       </header>
-      <div class="gallery-post-body">${picture}${staged?body+related:related+body}${config.demoOnly?'':reactions}</div>
+      <div class="gallery-post-body">${imagePosition===undefined?picture:''}${staged?body+related:related+body}${config.demoOnly?'':reactions}</div>
       ${config.demoOnly?`<div class="cafe-post-actions">${reactions}${guideAction}${shareAction}</div>`:''}
     </article>
     ${comments}

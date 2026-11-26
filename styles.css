@@ -210,6 +210,17 @@ body.isolated-demo .dark:hover {background: #164c3a; border-color: #164c3a}
 .gallery-figure {margin: 0 0 18px; max-width: 680px}
 .gallery-figure img {display: block; width: 100%; height: auto}
 .gallery-figure figcaption {margin-top: 5px; color: var(--muted); font-size: .78rem}
+.gallery-figure-inline {margin-block: 20px; max-width: 580px}
+.gallery-figure-inline img {
+  aspect-ratio: 2.5 / 1;
+  border-radius: 8px;
+  background: var(--board-tint);
+  object-fit: cover;
+}
+@media (max-width: 590px) {
+  .gallery-figure-inline {margin-block: 17px}
+  .gallery-figure-inline img {aspect-ratio: 2 / 1}
+}
 .gallery-votes {margin-top: 22px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px}
 .gallery-votes button {
   display: inline-flex;
