@@ -6,6 +6,7 @@ import {shareEdition} from './share.js';
 import {anonymizeGalleryPosts,isNumberedGuest} from './gallery-aliases.js';
 import {makeGalleryReply,loveTermReply,sajuTerms} from './comment-replies.js';
 import {mountLibrary} from './library.js';
+import {cafeBoards,createCafeProgress} from './cafe-progress.js';
 
 const main=document.querySelector('#main'), dialog=document.querySelector('#dialog');
 const $=(sel,root=document)=>root.querySelector(sel);
@@ -18,7 +19,7 @@ const sampleBirthForm=()=>{
   return {...emptyBirth(),year,month,day,time};
 };
 const sampleName='예시';
-const siteName='SJ 인사이드';
+const siteName='사주판';
 let config={ai:false,google:false},demo=null,sampleInputs=null,chatReading=null,demoReading=null,birth=emptyBirth(),chart=null,records=newRecordState(),result=null,activePost=null;
 let displayName='';
 let cleanup=null,revision=0,notification;
@@ -60,7 +61,7 @@ function demoEntryForm(){
 }
 function demoGate(){
   return `<div class="demo-gate"><section class="demo-gate-card" aria-labelledby="demo-gate-title">
-    <div class="demo-gate-brand"><img src="./favicon.svg?v=sj" alt="" width="32" height="32"><strong>${siteName}</strong></div>
+    <div class="demo-gate-brand"><strong>${siteName}</strong></div>
     <h1 id="demo-gate-title">내 사주 카페</h1>
     <p>이름과 출생 정보를 고르면 이 탭에 내 카페가 열려요.</p>
     ${demoEntryForm()}
@@ -128,12 +129,8 @@ function galleryDisplayName(route){
   return displayName||(route==='reading'?chatReading.displayName:route==='result'?'':sampleName);
 }
 function availablePosts(route){
-  const collection=postsCollection(route);
-  const posts=collection?.posts||[];
-  if(!isReadingRoute(route))return posts;
-  const activePosts=posts.filter(post=>publishedReadingPosts.has(post));
-  const freePost=config.demoOnly&&route==='demo-reading'&&collection?.freePost;
-  return freePost&&publishedReadingPosts.has(freePost)?[freePost,...activePosts]:activePosts;
+  const posts=postsCollection(route)?.posts||[];
+  return isReadingRoute(route)?posts.filter(post=>publishedReadingPosts.has(post)):posts;
 }
 function visibleCommentCount(post,route){
   return commentThreads.get(post)?.entries.length??(isReadingRoute(route)&&post!==demoReading?.freePost?0:post.comments.length);
@@ -202,28 +199,47 @@ function cafeAuthor(account,route){
   const profile=cafeProfiles.get(account.author)||'anonymous';
   return `<span class="cafe-author"><span class="cafe-avatar" data-profile="${profile}" aria-hidden="true">${esc(mark)}</span>${identity}</span>`;
 }
-function cafeNoticeNav(ready){
-  return ready
-    ?'<a href="#demo-reading/notice">공지사항</a>'
-    :'<span aria-disabled="true">공지사항</span>';
+const cafeBoardById=new Map(cafeBoards.map(board=>[board.id,board]));
+const cafeBoardLink=id=>`#demo-reading/board/${id}`;
+const cafeRanks=['새싹 회원','일반 회원','열심 회원','우수 회원','정독 회원'];
+const cafeRankGuidance=[
+  '공지사항을 읽으면 일반 게시판이 열려요.',
+  '일반 게시판의 글을 다 읽으면 살풀이가 열려요.',
+  '살풀이를 읽으면 운세 게시판 다섯 곳이 열려요.',
+  '운세 게시판 다섯 곳을 모두 읽으면 일반에 정리글이 올라와요.',
+  '일반 게시판에 정리글이 올라왔어요.',
+];
+function cafeBoardNav(progress,current){
+  return `<nav class="cafe-board-nav" aria-label="게시판 메뉴">${cafeBoards.map(board=>{
+    const open=progress.isUnlocked(board.id);
+    const count=progress.counts(board.id);
+    const complete=open&&count.total>0&&count.read===count.total;
+    const state=open?(complete?'cafe-board-done':''):'cafe-board-locked';
+    return `<a href="${cafeBoardLink(board.id)}" class="${state}"${current===board.id?' aria-current="page"':''}
+      aria-label="${board.label}${open?(complete?' (읽기 완료)':''):' (잠김)'}">
+      ${board.label}${open?'':icon('lock',13)}</a>`;
+  }).join('')}</nav>`;
 }
-function galleryBar(route){
+function galleryBar(route,boardId){
   const name=route==='gallery'?'':galleryDisplayName(route);
   const title=cafeTitle(name);
   const titleLink=`<a class="gallery-name" href="#${route}">${esc(title)}</a>`;
   if(config.demoOnly){
+    const progress=demoReading.progress;
     const exit='<a class="board-link demo-exit" href="#home">나가기</a>';
-    if(activePost)return `<header class="cafe-threadbar gallery-tools">
-      <a class="cafe-back" href="#${route}" data-action="all-cafe-posts">‹ 전체글</a>${titleLink}${exit}
-    </header>`;
+    if(activePost){
+      const id=progress.boardOf(activePost.id);
+      return `<header class="cafe-threadbar gallery-tools">
+        <a class="cafe-back" href="${cafeBoardLink(id)}">‹ ${cafeBoardById.get(id).label}</a>${titleLink}${exit}
+      </header>`;
+    }
     return `<header class="cafe-masthead">
       <div class="cafe-brandbar">
-        <a class="cafe-brand gallery-name" href="#${route}"><img src="./favicon.svg?v=sj" width="26" height="26" alt=""><span>${esc(title)}</span></a>${exit}
+        <a class="cafe-brand gallery-name" href="#${route}">${esc(title)}</a>${exit}
       </div>
-      <nav class="cafe-board-nav" aria-label="카페 메뉴">
-        <a href="#${route}" data-action="all-cafe-posts" aria-current="page">전체글</a>
-        ${cafeNoticeNav(demoReading.noticeReady)}
-      </nav>
+      <div class="cafe-membership" aria-label="등업 안내"><strong>${cafeRanks[progress.tier]}</strong>
+        <span>${cafeRankGuidance[progress.tier]}</span></div>
+      ${cafeBoardNav(progress,boardId)}
     </header>`;
   }
   return `<div class="gallery-band">${titleLink}<span>${icon('lock',14)} ${route==='demo-reading'?'데모':'비공개'} · 가상 카페</span></div>`;
@@ -231,20 +247,23 @@ function galleryBar(route){
 const positiveReaction=route=>isReadingRoute(route)?'공감':'추천';
 const readingNoticeTitle='처음 온 사람은 이 글부터 봐줘';
 function postsRows(posts,noticeRoute){
-  const cafe=config.demoOnly&&noticeRoute==='demo-reading';
-  const unread=cafe&&!demoReading.noticeOpened;
-  const latest=cafe?demoReading.posts.findLast((post,index)=>index>0&&publishedReadingPosts.has(post)):null;
+  const cafe=config.demoOnly;
+  const unread=cafe&&noticeRoute&&!demoReading.noticeOpened;
+  const noticeRead=cafe&&demoReading.progress.isRead('notice');
   const notice=noticeRoute?`<li class="gallery-pinned-row"><a href="#${noticeRoute}/notice"${unread?' class="demo-notice-unread"':''}>
-    <span class="gallery-list-main"><span class="gallery-list-type">공지</span><span class="gallery-list-title"><strong>${readingNoticeTitle}</strong></span></span>
+    <span class="gallery-list-main"><span class="gallery-list-type">공지</span><span class="gallery-list-title"><strong>${readingNoticeTitle}</strong></span>${noticeRead?'<span class="cafe-row-read">읽음</span>':''}</span>
     <span class="gallery-list-meta">운영진</span>${icon('arrow',16)}
   </a></li>`:'';
   return `<ul class="gallery-rows">${notice}${posts.map(({route,post})=>{
       const count=visibleCommentCount(post,route);
-      return `<li><a href="#${route}/${esc(post.id)}">
+      const summary=cafe&&post.tag==='정리';
+      const read=cafe&&demoReading.progress.isRead(post.id);
+      const rowClass=[summary&&'cafe-summary-row',read&&'cafe-row-read'].filter(Boolean).join(' ');
+      return `<li${rowClass?` class="${rowClass}"`:''}><a href="#${route}/${esc(post.id)}">
         <span class="gallery-list-main">
           <span class="gallery-list-type${post.tag==='사주'?' gallery-list-chart':''}">${esc(post.tag)}</span>
           <span class="gallery-list-title">${galleryText(post.title,route)}</span>
-          ${post===latest&&!postViews.get(post)?'<span class="cafe-row-new">새 글</span>':''}
+          ${read?'<span class="cafe-row-read">읽음</span>':summary?'<span class="cafe-row-new">새 글</span>':''}
         </span>
         <span class="gallery-list-meta">
           <span class="gallery-list-author">${readingIdentity(post,route)}</span>
@@ -297,7 +316,7 @@ function readingNoticeCopy(interactive=false){
   return `<div class="reading-notice-copy">
     <p>카페에 처음 왔어? 여기서 ${reply}을 누르면 <strong>ㅇㅇ</strong>으로 네 댓글이 달려.</p>
     <p>글에서 궁금한 말은 밑줄을 눌러 봐. 댓글로 물어볼 수 있어.</p>
-    <p>댓글을 다 읽으면 <strong>새 댓글 보기</strong>를 눌러. ${config.demoOnly?'<strong>새 글 알림</strong>을 눌러 다음 글을 읽으면 돼.':'<strong>새 글 보기</strong>가 뜨면 다음 글로 넘어가면 돼.'}</p>
+    <p>댓글을 다 읽으면 <strong>새 댓글 보기</strong>를 눌러. ${config.demoOnly?'<strong>다 읽었어요</strong>를 누르면 읽은 글로 표시돼. 게시판 글을 다 읽으면 등업이 어떻게 되는지도 메뉴에서 볼 수 있어.':'<strong>새 글 보기</strong>가 뜨면 다음 글로 넘어가면 돼.'}</p>
   </div>`;
 }
 function noticeDiscussion(route){
@@ -307,7 +326,7 @@ function noticeDiscussion(route){
     comments:[{author:'글쓴이',text:'위에 있는 답글을 눌러서 댓글 흐름을 한 번 봐도 돼.'}],
     questions:[{
       after:0,question:'처음인데 어디부터 읽으면 돼?',
-      text:'어서 와. 위에 있는 ‘첫 글 읽기’부터 눌러봐.\n\n그다음엔 댓글을 다 읽으면 새 글이 열려.'
+      text:config.demoOnly?'어서 와. 공지를 다 봤으면 댓글 아래 ‘다 읽었어요’를 눌러봐.\n\n등업되면서 일반 게시판이 열릴 거야.':'어서 와. 위에 있는 ‘첫 글 읽기’부터 눌러봐.\n\n그다음엔 댓글을 다 읽으면 새 글이 열려.'
     }]
   };
   startCommentThread(post,route);
@@ -318,9 +337,9 @@ function noticeDiscussion(route){
 function readingNoticePage(route,post){
   const collection=postsCollection(route);
   const first=collection.posts[0];
-  const {comments}=postDiscussion(post,route);
+  const {comments,next}=postDiscussion(post,route);
   const summary=route==='demo-reading'?`<p class="demo-reading-summary">${esc(collection.calculationSummary)}</p>`:'';
-  const firstLink=first?button(`${route}/${esc(first.id)}`,'첫 글 읽기','arrow'):'';
+  const firstLink=first&&!config.demoOnly?button(`${route}/${esc(first.id)}`,'첫 글 읽기','arrow'):'';
   return `<div class="reportwrap gallery-wrap gallery-thread community-gallery">
     ${galleryBar(route)}
     ${config.demoOnly?'':`<div class="gallery-tools"><a class="button light compact" href="#${route}">‹ 목록</a></div>`}
@@ -331,6 +350,30 @@ function readingNoticePage(route,post){
       <div class="gallery-post-body reading-notice-body">${summary}${readingNoticeCopy(true)}${firstLink}</div>
     </article>
     ${comments}
+    ${config.demoOnly?`<div id="reading-next-slot" aria-live="polite">${next}</div>`:''}
+  </div>`;
+}
+function demoBoardList(boardId){
+  const progress=demoReading.progress;
+  const board=cafeBoardById.get(boardId);
+  const open=progress.isUnlocked(boardId);
+  const count=progress.counts(boardId);
+  const entries=progress.posts(boardId).map(post=>({route:'demo-reading',post}));
+  const notice=boardId==='notice'&&demoReading.noticeReady?'demo-reading':'';
+  const rows=open?`<div${boardId==='notice'?' id="demo-notice-slot" aria-live="polite"':''}>${postsRows(entries,notice)}</div>`
+    :`<div class="cafe-board-access">
+        <strong>${icon('lock',17)} 등업 후 볼 수 있는 게시판이에요</strong>
+        <p>${cafeRankGuidance[board.level-1]}</p>
+        <a class="board-link" href="${cafeBoardLink(progress.recommendedBoard)}">읽을 글로 이동 ${icon('arrow',14)}</a>
+      </div>`;
+  return `<div class="reportwrap gallery-wrap community-gallery cafe-home">${galleryBar('demo-reading',boardId)}
+    <section class="gallery-index" aria-labelledby="cafe-board-title">
+      <header class="cafe-board-head">
+        <h1 class="cafe-board-heading" id="cafe-board-title">${board.label}</h1>
+        ${open?`<span class="cafe-board-count">읽음 ${count.read}/${count.total}</span>`:''}
+      </header>
+      ${rows}
+    </section>
   </div>`;
 }
 function postsList(route){
@@ -353,19 +396,6 @@ function postsList(route){
     ${query?`<span class="gallery-search-count" role="status">검색 결과 ${filtered.length}개</span><button class="board-link" type="button" data-action="clear-search">검색 지우기</button>`:''}
   </div>`;
   const empty=filtered.length?'':'<p class="gallery-empty">검색 결과가 없습니다.</p>';
-  if(config.demoOnly&&route==='demo-reading'){
-    const ready=demoReading.noticeReady;
-    const controlsOpen=$('.cafe-home .cafe-list-controls')?.open;
-    return `<div class="reportwrap gallery-wrap community-gallery cafe-home">${galleryBar(route)}
-      <section class="gallery-index" aria-labelledby="cafe-board-title">
-        <h1 class="cafe-board-heading" id="cafe-board-title">최신글</h1>
-        <div id="demo-notice-slot" aria-live="polite">${postsRows(filtered,ready?route:'')}${ready?empty:''}</div>
-      </section>
-      ${ready?`<details class="cafe-list-controls"${controlsOpen?' open':''}>
-        <summary>게시판 · 검색</summary>${filters}${search}${readingContents(route)}
-      </details>`:''}
-    </div>`;
-  }
   const sample=route==='demo';
   const local=route==='result'&&result.mode==='local';
   const visibleName=galleryDisplayName(route);
@@ -426,12 +456,27 @@ function participantHasDeparted(post,thread,account){
     return who.author===account.author&&who.ipTag===account.ipTag;
   });
 }
+function hasUnreadDiscussion(post,thread){
+  return thread.storyCount<post.comments.length||thread.pendingReplies.length>0||thread.pendingFollowups.length>0||thread.pendingLiveReplies.length>0;
+}
+function cafeReadingStep(post,waiting){
+  const progress=demoReading.progress;
+  const board=progress.boardOf(post.id);
+  const {read,total}=progress.counts(board);
+  const done=progress.isRead(post.id);
+  return `<div class="cafe-reading-progress" tabindex="-1">
+    <p><strong>${cafeBoardById.get(board).label} · 읽음 ${read}/${total}</strong><br>
+      ${done?(post.tag==='정리'?'정리글까지 다 읽었어요.':'읽은 글로 표시했어요.'):waiting?'댓글 아래에서 새 댓글을 끝까지 확인해 주세요.':'글을 다 봤다면 읽음으로 표시해 주세요.'}</p>
+    ${done?`<a class="board-link" href="${cafeBoardLink(board)}">게시판으로 ${icon('arrow',14)}</a>`
+      :`<button type="button" data-action="confirm-cafe-read"${waiting?' disabled':''}>다 읽었어요</button>`}
+  </div>`;
+}
 function postDiscussion(post,route){
   const thread=commentThreads.get(post);
   const staged=isReadingRoute(route);
   const notice=post.id==='notice';
-  const hasNewComments=thread.storyCount<post.comments.length||thread.pendingReplies.length||thread.pendingFollowups.length||thread.pendingLiveReplies.length;
-  const nextPost=staged&&!hasNewComments
+  const hasNewComments=hasUnreadDiscussion(post,thread);
+  const nextPost=staged&&!config.demoOnly&&!hasNewComments
     ?post.comments.slice(0,thread.storyCount).map(comment=>readingFollowup(post,comment,route)).findLast(Boolean)
     :null;
   const byId=new Map();
@@ -475,13 +520,13 @@ function postDiscussion(post,route){
   }
   const questions=readerQuestions(post,route,-1);
   const nextAuthor=nextPost?readingNickname(nextPost,route):'';
-  const nextLabel=nextAuthor+(config.demoOnly?'님이 새 글을 올렸어요':' 새 글 보기');
-  const next=nextPost&&publishedReadingPosts.has(nextPost)?`<div class="reading-next">
-    <a class="reading-followup${config.demoOnly?' cafe-followup':''}" href="#${route}/${esc(nextPost.id)}" aria-label="${esc(nextLabel)}. ${esc(postText(nextPost.title,route))}">
+  const nextLabel=nextAuthor+' 새 글 보기';
+  const next=config.demoOnly?cafeReadingStep(post,hasNewComments):nextPost&&publishedReadingPosts.has(nextPost)?`<div class="reading-next">
+    <a class="reading-followup" href="#${route}/${esc(nextPost.id)}" aria-label="${esc(nextLabel)}. ${esc(postText(nextPost.title,route))}">
       <span><small>${esc(nextLabel)}</small><strong>${galleryText(nextPost.title,route)}</strong></span>${icon('arrow',16)}
     </a>
   </div>`:'';
-  const complete=staged&&!hasNewComments&&!next&&post===postsCollection(route).posts.at(-1)?'<p class="reading-complete">마지막 글까지 읽었어요.</p>':'';
+  const complete=staged&&!config.demoOnly&&!hasNewComments&&!next&&post===postsCollection(route).posts.at(-1)?'<p class="reading-complete">마지막 글까지 읽었어요.</p>':'';
   const comments=`<section class="gallery-comments" id="gallery-comments" tabindex="-1" aria-labelledby="gallery-comments-title">
     <header><h2 id="gallery-comments-title">${icon('dialogue',18)} 댓글 <b>${thread.entries.length}</b></h2><span>가상 댓글</span></header>
     ${questions?(staged?`<details class="gallery-comment-questions reading-question-panel"><summary>댓글로 물어보기</summary>${questions}</details>`:`<div class="gallery-comment-questions">${questions}</div>`):''}
@@ -570,7 +615,7 @@ function postPage(post,route){
     </article>
     ${comments}
     ${staged?`<div id="reading-next-slot" aria-live="polite">${next}</div>`:threadLinks(post,route)}
-    <div class="postactions"><a class="button light" href="#${route}">글 목록</a></div>
+    ${config.demoOnly?'':`<div class="postactions"><a class="button light" href="#${route}">글 목록</a></div>`}
   </div>`;
 }
 function showDialog(html){
@@ -737,8 +782,10 @@ function refreshReadingComments(post,route){
     const end=Math.min(thread.storyCount+batchSize,post.comments.length);
     for(let index=thread.storyCount;index<end;index++){
       appendStoryComment(thread,post,index);
-      const followup=readingFollowup(post,post.comments[index],route);
-      if(followup)publishedReadingPosts.add(followup);
+      if(!config.demoOnly){
+        const followup=readingFollowup(post,post.comments[index],route);
+        if(followup)publishedReadingPosts.add(followup);
+      }
     }
   }else return;
   thread.readyAt=performance.now()+readingReplyDelay;
@@ -761,25 +808,41 @@ function scheduleDemoNotice(){
   if(!slot||demoReading.noticeReady)return;
   const timer=setTimeout(()=>{
     demoReading.noticeReady=true;
-    publishedReadingPosts.add(demoReading.posts[0]);
-    if(demoReading.freePost)publishedReadingPosts.add(demoReading.freePost);
     route(false);
-    $('#demo-notice-slot').classList.add('demo-notice-arriving');
+    $('#demo-notice-slot')?.classList.add('demo-notice-arriving');
   },360);
   cleanup=()=>clearTimeout(timer);
+}
+function confirmCafeRead(){
+  const post=activePost;
+  const progress=demoReading.progress;
+  if(hasUnreadDiscussion(post,commentThreads.get(post)))return;
+  const previousTier=progress.tier;
+  if(!progress.confirm(post.id))return;
+  if(post.tag==='정리'){
+    $('#reading-next-slot').innerHTML=cafeReadingStep(post,false);
+    $('.cafe-reading-progress').focus({preventScroll:true});
+    return;
+  }
+  const tier=progress.tier;
+  if(tier>previousTier){
+    const unlocked=['','일반 게시판이 열렸어요.','살풀이 게시판이 열렸어요.','운세 게시판 다섯 곳이 열렸어요.','일반 게시판에 정리글이 올라왔어요.'];
+    message(`${cafeRanks[tier]}으로 등업됐어요. ${unlocked[tier]}`);
+    location.hash=cafeBoardLink(progress.recommendedBoard);
+  }else{
+    location.hash=cafeBoardLink(progress.boardOf(post.id));
+  }
 }
 function route(scroll=true){
   const previousPost=activePost;
   stopReadingCommentNotice?.();
   revision++;cleanup?.();cleanup=null;activePost=null;
-  let [key,postId]=location.hash.slice(1).split('/');
+  let [key,postId,boardParam]=location.hash.slice(1).split('/');
   key ||= 'home';
   if(config.demoOnly){
     if(key==='home')clearDemoReading();
     else if(key!=='demo-reading'||!demoReading){
       key=demoReading?'demo-reading':'home';
-      history.replaceState(null,'','#'+key);postId=null;
-    }else if(postId==='notice'&&!demoReading.noticeReady){
       history.replaceState(null,'','#'+key);postId=null;
     }
   }
@@ -789,6 +852,19 @@ function route(scroll=true){
   if(key==='records'&&!chart){history.replaceState(null,'','#birth');key='birth';}
   if(key==='youtube'&&!config.google){history.replaceState(null,'','#connect');key='connect';}
   if(!['birth','records','demo','result','reading','demo-reading','home','connect','youtube','gallery','library'].includes(key))key='home';
+  let demoBoard;
+  if(config.demoOnly&&key==='demo-reading'){
+    const progress=demoReading.progress;
+    demoBoard=progress.recommendedBoard;
+    if(postId==='board'){
+      if(cafeBoardById.has(boardParam))demoBoard=boardParam;
+      else history.replaceState(null,'',cafeBoardLink(demoBoard));
+      postId=null;
+    }else if(postId&&(!progress.post(postId)||(postId==='notice'&&!demoReading.noticeReady))){
+      demoBoard=progress.boardOf(postId)||demoBoard;
+      history.replaceState(null,'',cafeBoardLink(demoBoard));postId=null;
+    }
+  }
   if(dialog.open)dialog.close();
   const activeNav=key==='demo'||key==='result'||key==='demo-reading'?'gallery':key;
   document.querySelectorAll('[data-nav]').forEach(a=>{if(a.dataset.nav===activeNav)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
@@ -831,15 +907,14 @@ function route(scroll=true){
     main.innerHTML=readingNoticePage(key,activePost);
     document.title=readingNoticeTitle+' · '+storyTitle;
   }else if(key==='demo'||key==='result'||isReadingRoute(key)){
-    const posts=config.demoOnly?availablePosts(key):postsCollection(key).posts;
-    activePost=posts.find(post=>post.id===postId)||null;
+    activePost=(config.demoOnly?demoReading.progress.post(postId):postsCollection(key).posts.find(post=>post.id===postId))||null;
     if(activePost){
-      if(isReadingRoute(key))publishedReadingPosts.add(activePost);
+      if(!config.demoOnly&&isReadingRoute(key))publishedReadingPosts.add(activePost);
       startCommentThread(activePost,key);
     }
     if(activePost&&activePost!==previousPost)postViews.set(activePost,(postViews.get(activePost)||0)+1);
     if(postId&&!activePost)history.replaceState(null,'','#'+key);
-    main.innerHTML=activePost?postPage(activePost,key):postsList(key);
+    main.innerHTML=activePost?postPage(activePost,key):config.demoOnly?demoBoardList(demoBoard):postsList(key);
     if(config.demoOnly&&key==='demo-reading'&&!activePost)scheduleDemoNotice();
     if(activePost)document.title=postText(activePost.title,key)+' · '+storyTitle;
   }
@@ -898,7 +973,9 @@ main.addEventListener('submit',async event=>{
       if(version!==revision)return;
     }
     clearDemoReading();
-    demoReading={...structuredClone(reading),displayName:name,noticeReady:false,noticeOpened:false};
+    const saved=structuredClone(reading);
+    demoReading={...saved,displayName:name,noticeReady:false,noticeOpened:false,
+      progress:config.demoOnly?createCafeProgress(saved):null};
     if(!config.demoOnly)publishedReadingPosts.add(demoReading.posts[0]);
     location.hash=config.demoOnly?'demo-reading':'demo-reading/notice';
     return;
@@ -942,16 +1019,7 @@ main.addEventListener('submit',async event=>{
 document.addEventListener('click',async e=>{
   const node=e.target.closest('[data-action],[data-vote],[data-gallery-topic]');if(!node)return;
   const act=node.dataset.action;
-  if(act==='all-cafe-posts'){
-    galleryTopics.delete('demo-reading');
-    gallerySearches.delete('demo-reading');
-    if(location.hash==='#demo-reading'){
-      e.preventDefault();
-      route(false);
-      $('.cafe-board-nav a[aria-current="page"]').focus({preventScroll:true});
-    }
-    return;
-  }
+  if(act==='confirm-cafe-read'&&config.demoOnly&&activePost){confirmCafeRead();return;}
   if(node.hasAttribute('data-gallery-topic')){
     const key=topicKey(location.hash.slice(1));
     const tag=node.dataset.galleryTopic;
