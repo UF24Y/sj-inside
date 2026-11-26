@@ -364,9 +364,9 @@ const loveReplies = [
 ];
 const loveTopicReplies = {
   answer:'먼저 연락할 수도 있죠! 저도 정말 좋으면 “우리 거기 가볼래요?” 할 것 같아요 ㅎㅎ',
-  objection:'그렇게 볼 수도 있겠네요! 저는 갤주가 먼저 연락하고도 좋아하는 티는 조심해서 낼 것 같았어요.',
+  objection:'그렇게 볼 수도 있겠네요! 저는 이분이 먼저 연락하고도 좋아하는 티는 조심해서 낼 것 같았어요.',
   agreement:'그렇죠… 제가 무심코 한 말을 기억해 주면 갑자기 좀 설렐 것 같아요 🥹',
-  next:'갤주가 제일 먼저 무슨 말 할 것 같으세요? 저는 “그날 시간 돼요?”에 한 표예요 ㅎㅎ',
+  next:'이분이 제일 먼저 무슨 말 할 것 같으세요? 저는 “그날 시간 돼요?”에 한 표예요 ㅎㅎ',
 };
 
 function makeLoveReply(text, definition, previousReplies) {

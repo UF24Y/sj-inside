@@ -54,15 +54,15 @@ function demoEntryForm(){
           ${presets.map(({profileId,label})=>`<option value="${esc(profileId)}">${esc(label)}</option>`).join('')}
         </select>
       </label>
-      <button type="submit" class="button dark">${config.demoOnly?'갤러리 입장':'갤러리 열기'}</button>
+      <button type="submit" class="button dark">카페 열기</button>
       ${config.demoOnly?'<p class="error" id="demo-entry-error" role="alert"></p>':''}
     </form>`:'';
 }
 function demoGate(){
   return `<div class="demo-gate"><section class="demo-gate-card" aria-labelledby="demo-gate-title">
     <div class="demo-gate-brand"><img src="./favicon.svg?v=sj" alt="" width="32" height="32"><strong>${siteName}</strong></div>
-    <h1 id="demo-gate-title">마이너 갤러리 입장</h1>
-    <p>입력한 이름으로 이 탭에 갤러리가 열려요.</p>
+    <h1 id="demo-gate-title">내 사주 카페</h1>
+    <p>이름과 출생 정보를 고르면 이 탭에 내 카페가 열려요.</p>
     ${demoEntryForm()}
     <p class="demo-gate-note">오락과 자기성찰을 위한 데모예요.</p>
   </section></div>`;
@@ -71,9 +71,9 @@ function home(){
   if(config.demoOnly)return demoGate();
   return `<div class="reportwrap gallery-wrap"><section class="board-intro"><div>
     <h1>타고난 결, 살아온 기록.</h1>
-    <p>이름과 출생 정보를 고르면 데모 마이너 갤러리가 열려요.</p>
+    <p>이름과 출생 정보를 고르면 내 사주 카페가 열려요.</p>
     ${demoEntryForm()}
-    <div class="actions">${chatReading?button('reading/notice','내 사주 읽기','book','light'):button('birth','내 갤러리 만들기','pen','light')}${button('demo','샘플 먼저 읽기','book','light')}</div></div>
+    <div class="actions">${chatReading?button('reading/notice','내 사주 읽기','book','light'):button('birth','내 카페 만들기','pen','light')}${button('demo','샘플 먼저 읽기','book','light')}</div></div>
     <img src="./landscape.webp" alt="" width="252" height="162"></section>
     <section class="gallery-index community-preview" aria-labelledby="preview-heading">
       <div class="gallery-index-head"><h2 id="preview-heading">샘플 게시글</h2><a class="board-link" href="#demo">${demo.posts.length}편 전체 보기 ${icon('arrow',13)}</a></div>
@@ -117,7 +117,7 @@ function wireBirth(){
   });
 }
 function birthPayload(){return {calendar:birth.calendar,date:[birth.year,birth.month.padStart(2,'0'),birth.day.padStart(2,'0')].join('-'),time:birth.unknownTime?'':birth.time,...(birth.gender?{gender:birth.gender}:{}),birthplace:birth.birthplace.trim(),timezone:birth.timezone.trim(),leapMonth:birth.calendar==='lunar'&&birth.leapMonth,confirmAssumption:birth.confirmAssumption};}
-const modeName={sample:'가상 스레드',local:'로컬 생성',ai:'OpenAI 생성',chat:'가상 스레드',preset:'데모 스레드'};
+const modeName={sample:'가상 스레드',local:'로컬 생성',ai:'OpenAI 생성',chat:'가상 스레드',preset:'데모 게시글'};
 const postAuthors=['지나가던갤러','한줄만씀','명식구경중','관전중ㅇㅇ'];
 const topicKey=route=>route==='gallery'?'demo':route;
 const isReadingRoute=route=>route==='reading'||route==='demo-reading';
@@ -175,21 +175,41 @@ function galleryAuthor(account,route){
   return isReadingRoute(route)&&isNumberedGuest(account.author)?account.author.replace('사주갤럼 ','익명 '):account.author;
 }
 function readingNickname(account,route){
-  return galleryAuthor(account,route)+(account.ipTag?`(${account.ipTag})`:'');
+  return galleryAuthor(account,route)+(account.ipTag&&!config.demoOnly?`(${account.ipTag})`:'');
 }
 function readingIdentity(account,route){
   const name=esc(galleryAuthor(account,route));
-  if(account.ipTag)return `<span class="reading-identity reading-anonymous" title="${isReadingRoute(route)?'가상 익명 사용자':'가상 통피'}">${name}<span class="reading-ip">(${esc(account.ipTag)})</span></span>`;
+  if(account.ipTag){
+    const address=config.demoOnly?'':`<span class="reading-ip">(${esc(account.ipTag)})</span>`;
+    return `<span class="reading-identity reading-anonymous" title="${isReadingRoute(route)?'가상 익명 사용자':'가상 통피'}">${name}${address}</span>`;
+  }
   if(isNumberedGuest(account.author)||account.author==='ㅇㅇ')return `<span class="reading-identity reading-anonymous">${name}</span>`;
   return `<span class="reading-identity reading-fixed" title="${isReadingRoute(route)?'닉네임':'고닉'}">${name}</span>`;
 }
+function cafeNoticeNav(ready,current=false){
+  return ready
+    ?`<a href="#demo-reading/notice"${current?' aria-current="page"':''}>공지사항</a>`
+    :'<span aria-disabled="true">공지사항</span>';
+}
 function galleryBar(route){
-  const name=galleryDisplayName(route);
-  const title=name?name+' 마이너 갤러리':'사주 갤러리';
-  const access=config.demoOnly
-    ?`<span>${icon('lock',14)} 이 탭의 갤러리 <a class="board-link demo-exit" href="#home">나가기</a></span>`
-    :`<span>${icon('lock',14)} ${route==='demo-reading'?'데모':'비공개'} · 가상 게시판</span>`;
-  return `<div class="gallery-band"><a class="gallery-name" href="#${route}">${esc(title)}</a>${access}</div>`;
+  const name=route==='gallery'?'':galleryDisplayName(route);
+  const title=name?name+'님의 사주 카페':'사주 카페';
+  const titleLink=`<a class="gallery-name" href="#${route}">${esc(title)}</a>`;
+  if(config.demoOnly){
+    const inNotice=activePost?.id==='notice';
+    return `<header class="cafe-masthead">
+      <div class="cafe-brandbar">
+        <a class="cafe-brand" href="#${route}"><img src="./favicon.svg?v=sj" width="26" height="26" alt=""><strong>${siteName}</strong></a>
+        <a class="board-link demo-exit" href="#home">나가기</a>
+      </div>
+      <div class="gallery-band cafe-banner"><span class="cafe-private">${icon('lock',14)} 나만 보는 카페</span>${titleLink}</div>
+      <nav class="cafe-board-nav" aria-label="카페 메뉴">
+        <a href="#${route}"${inNotice?'':' aria-current="page"'}>전체글</a>
+        ${cafeNoticeNav(demoReading.noticeReady||inNotice,inNotice)}
+      </nav>
+    </header>`;
+  }
+  return `<div class="gallery-band">${titleLink}<span>${icon('lock',14)} ${route==='demo-reading'?'데모':'비공개'} · 가상 카페</span></div>`;
 }
 const positiveReaction=route=>isReadingRoute(route)?'공감':'추천';
 const readingNoticeTitle='처음 온 사람은 이 글부터 봐줘';
@@ -255,8 +275,9 @@ function readingNoticeCopy(interactive=false){
     ?'<button type="button" class="intext notice-reply-trigger" data-action="ask-reader-question" data-question="0" aria-controls="gallery-comments">답글</button>'
     :'<strong>답글</strong>';
   return `<div class="reading-notice-copy">
-    <p>이 공지에서 ${reply}을 누르면 <strong>ㅇㅇ</strong>으로 답글이 달려. 다른 글에서 궁금한 말이 나오면 밑줄을 눌러봐. 그것도 질문 댓글로 달려.</p>
-    <p>댓글 맨 아래 <strong>새 댓글 보기</strong> 누르면 뒤에 달린 댓글이 보여. 다 읽고 댓글창 아래에 <strong>새 글 보기</strong> 뜨면 거기서 이어 읽으면 돼.</p>
+    <p>카페에 처음 왔어? 여기서 ${reply}을 누르면 <strong>ㅇㅇ</strong>으로 네 댓글이 달려.</p>
+    <p>글에서 궁금한 말은 밑줄을 눌러 봐. 댓글로 물어볼 수 있어.</p>
+    <p>댓글을 다 읽으면 <strong>새 댓글 보기</strong>를 눌러. <strong>새 글 보기</strong>가 뜨면 다음 글로 넘어가면 돼.</p>
   </div>`;
 }
 function noticeDiscussion(route){
@@ -301,7 +322,7 @@ function postsList(route){
   }
   if(config.demoOnly&&route==='demo-reading'&&!entries.length){
     return `<div class="reportwrap gallery-wrap community-gallery">${galleryBar(route)}
-      <section class="gallery-index demo-lobby" aria-label="게시판">
+      <section class="gallery-index demo-lobby" aria-label="카페 전체글">
         <div id="demo-notice-slot" aria-live="polite">${postsRows([],demoReading.noticeReady?route:'')}</div>
       </section>
     </div>`;
@@ -317,7 +338,7 @@ function postsList(route){
   const reading=staged?postsCollection(route):null;
   return `<div class="reportwrap gallery-wrap community-gallery">${galleryBar(route)}
     <section class="gallery-index">
-      <div class="gallery-index-head"><h1>${route==='demo-reading'?'데모 게시글':route==='reading'?'내 사주 게시글':route==='result'?'새 게시글':'게시글 목록'}</h1>
+      <div class="gallery-index-head"><h1>${route==='demo-reading'?'전체글':route==='reading'?'내 사주 게시글':route==='result'?'새 게시글':'게시글 목록'}</h1>
         ${config.demoOnly?'':`<form class="gallery-name-form"><label for="gallery-display-name">표시 이름</label>
           <input id="gallery-display-name" name="displayName" maxlength="24" autocomplete="off" value="${esc(visibleName)}">
           <button type="submit" class="button light compact">이름 적용</button>
@@ -523,13 +544,13 @@ function showDialog(html){
 }
 function privacy(){
   showDialog(`<div class="overline">${icon('shield')} 개인정보</div><h2>내 기록은 어디로 가나요?</h2><dl class="policy"><dt>이 기기</dt><dd>내보내기 파일과 붙여넣은 글은 브라우저에서 읽습니다. 민감 표현을 걸러낸 뒤, 직접 선택한 주제와 건수만 로컬 서버로 보냅니다. 필터에 빠지는 표현이 있을 수 있어 전송 전 요약을 확인합니다.</dd>
-    <dt>갤러리에서 쓴 답글</dt><dd>직접 남긴 답글은 현재 탭에만 표시됩니다. 페이지를 새로고침하거나 탭을 닫으면 사라집니다.</dd>
+    <dt>카페에 남긴 답글</dt><dd>직접 남긴 답글은 현재 탭에만 표시됩니다. 페이지를 새로고침하거나 탭을 닫으면 사라집니다.</dd>
     <dt>OpenAI 선택 시</dt><dd>전송 대상은 네 기둥과 계산 유보 사항, 선택한 요약입니다. 서버는 응답 저장을 끈 상태로 요청합니다. OpenAI의 기본 악용 방지 로그는 일반적으로 최대 30일 보관될 수 있습니다.</dd>
     <dt>Google 연결 시</dt><dd>YouTube 읽기 권한으로 선택한 목록을 한 번 읽고 권한 해제를 요청합니다. 서버의 미수령 목록은 최대 10분간 메모리에 둡니다. 원래 서비스의 파일과 활동은 해당 서비스에서 관리합니다.</dd>
-    <dt>이용 중인 자료 지우기</dt><dd>아래 버튼으로 현재 탭의 입력, 요약, 작성한 게시글과 서버의 임시 연결 정보를 지울 수 있습니다. ${chatReading?'이 대화에서 작성한 내 사주 게시글은 이 기기에 저장돼 있으며 함께 지울 수 있습니다. ':''}갤러리의 샘플은 앱에 동봉한 고정 예시입니다. 이미 복사한 글과 외부 서비스 기록은 각 위치에서 관리하세요.</dd></dl><div class="doclinks"><a href="https://developers.openai.com/api/docs/guides/your-data" target="_blank" rel="noreferrer">OpenAI 데이터 정책</a><a href="https://myaccount.google.com/connections" target="_blank" rel="noreferrer">Google 연결 관리</a></div><button class="button danger" data-action="confirm-erase">${icon('trash')} 내 자료 지우기</button>`);
+    <dt>이용 중인 자료 지우기</dt><dd>아래 버튼으로 현재 탭의 입력, 요약, 작성한 게시글과 서버의 임시 연결 정보를 지울 수 있습니다. ${chatReading?'이 대화에서 작성한 내 사주 게시글은 이 기기에 저장돼 있으며 함께 지울 수 있습니다. ':''}카페의 샘플 글은 앱에 포함한 고정 예시입니다. 이미 복사한 글과 외부 서비스 기록은 각 위치에서 관리하세요.</dd></dl><div class="doclinks"><a href="https://developers.openai.com/api/docs/guides/your-data" target="_blank" rel="noreferrer">OpenAI 데이터 정책</a><a href="https://myaccount.google.com/connections" target="_blank" rel="noreferrer">Google 연결 관리</a></div><button class="button danger" data-action="confirm-erase">${icon('trash')} 내 자료 지우기</button>`);
 }
 function guide(){
-  showDialog(`<div class="overline">${icon('book')} 이용 안내</div><h2>${siteName} 읽는 법</h2><ol class="guide"><li><strong>네 기둥을 계산해요.</strong><p>양력 또는 한국 음력 생일, 현지 시각과 시간대를 입력합니다. 출생지를 모르면 임시 가정이 표시됩니다.</p></li><li><strong>글에 쓸 주제를 골라요.</strong><p>내보낸 파일이나 직접 입력한 요약에서 주제를 확인합니다. 기록을 건너뛰어도 됩니다.</p></li><li><strong>목록에서 글을 읽어요.</strong><p>한 주제씩 나눠 쓴 글이 목록에 올라옵니다. 샘플 글은 직접 들려준 이야기를 각색했고 댓글은 가상입니다.</p></li></ol><button class="button dark" data-action="close">확인</button>`);
+  showDialog(`<div class="overline">${icon('book')} 이용 안내</div><h2>${siteName} 읽는 법</h2><ol class="guide"><li><strong>네 기둥을 계산해요.</strong><p>양력 또는 한국 음력 생일, 현지 시각과 시간대를 입력합니다. 출생지를 모르면 임시 가정이 표시됩니다.</p></li><li><strong>글에 쓸 주제를 골라요.</strong><p>내보낸 파일이나 직접 입력한 요약에서 주제를 확인합니다. 기록을 건너뛰어도 됩니다.</p></li><li><strong>카페에서 글을 읽어요.</strong><p>한 주제씩 나눠 쓴 글이 카페에 올라옵니다. 샘플 글은 직접 들려준 이야기를 각색했고 댓글은 가상입니다.</p></li></ol><button class="button dark" data-action="close">확인</button>`);
 }
 function continueProvider(provider){
   if(provider==='google'){location.hash='youtube';return;}
@@ -705,6 +726,8 @@ function scheduleDemoNotice(){
     demoReading.noticeReady=true;
     slot.classList.add('demo-notice-arriving');
     slot.innerHTML=postsRows([],'demo-reading');
+    const pendingNav=$('.cafe-board-nav [aria-disabled="true"]');
+    if(pendingNav)pendingNav.outerHTML=cafeNoticeNav(true);
   },360);
   cleanup=()=>clearTimeout(timer);
 }
@@ -732,8 +755,8 @@ function route(scroll=true){
   document.querySelectorAll('[data-nav]').forEach(a=>{if(a.dataset.nav===activeNav)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   const pageName=({
     demo:'샘플 게시글',birth:'출생 정보',records:'기록 선택',result:'내 게시글',reading:'내 사주',
-    'demo-reading':'데모 마이너 갤러리',connect:'연결 설정',youtube:'YouTube 목록 확인',
-    gallery:'사주 갤러리',library:'사주 풀이 자료실',
+    'demo-reading':demoReading?demoReading.displayName+'님의 사주 카페':'내 사주 카페',connect:'연결 설정',youtube:'YouTube 목록 확인',
+    gallery:'사주 카페',library:'사주 풀이 자료실',
   })[key];
   document.title=pageName?`${pageName} · ${siteName}`:siteName;
   if(key==='connect'){
@@ -758,7 +781,7 @@ function route(scroll=true){
       saved?[saved.year,saved.month,saved.day,'?']:['병자','기해','임자','?'];
     const posts=(chart?result?.posts:chatReading?.posts)||[];
     const openings=posts.map(p=>Array.from((p.body||'').trim()).slice(0,12).join('')).filter(Boolean);
-    cleanup=mountLibrary(main,{api,pillars,openings,label:chart?'방금 입력한 명식':saved?'내 갤러리 명식 · 출생 시간대 미확정':'예시 명식'});
+    cleanup=mountLibrary(main,{api,pillars,openings,label:chart?'방금 입력한 명식':saved?'내 카페 명식 · 출생 시간대 미확정':'예시 명식'});
   }
   if(key==='gallery')main.innerHTML=postsList('gallery');
   if(key==='birth'){main.innerHTML=birthForm();wireBirth();}
