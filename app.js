@@ -20,6 +20,24 @@ const sampleBirthForm=()=>{
 };
 const sampleName='예시';
 const siteName='사주판';
+const defaultDemoCover={
+  theme:'paper',src:'./cafe-ink-intro.webp',alt:'한지 위에 펼친 종이와 붓, 아래로 이어지는 산수',
+  title:siteName,hanja:'四柱',line:'태어난 날의 두 글자, 일주',
+};
+const demoCovers=new Map([
+  ['경술',{
+    theme:'stone',src:'./cover-gyeongsul.webp',alt:'옅은 안개 너머 짙은 바위 능선과 물굽이',
+    title:'경술',hanja:'庚戌',line:'단단한 쇠와 묵직한 흙',
+  }],
+  ['정유',{
+    theme:'lamp',src:'./cover-jeongyu.webp',alt:'은빛 등잔에 타오르는 작은 불꽃과 가을 억새',
+    title:'정유',hanja:'丁酉',line:'은빛 위에 비친 잔잔한 불꽃',
+  }],
+  ['정축',{
+    theme:'ember',src:'./cover-jeongchuk.webp',alt:'눈 덮인 마당의 흙빛 화로와 붉은 숯불',
+    title:'정축',hanja:'丁丑',line:'겨울 흙 속에 남은 온기',
+  }],
+]);
 let config={ai:false,google:false},demo=null,sampleInputs=null,chatReading=null,demoReading=null,birth=emptyBirth(),chart=null,records=newRecordState(),result=null,activePost=null;
 let displayName='';
 let cleanup=null,revision=0,notification;
@@ -60,13 +78,36 @@ function demoEntryForm(){
     </form>`:'';
 }
 function demoGate(){
-  return `<div class="demo-gate"><section class="demo-gate-card" aria-labelledby="demo-gate-title">
-    <div class="demo-gate-brand"><strong>${siteName}</strong></div>
-    <h1 id="demo-gate-title">내 사주 카페</h1>
-    <p>이름과 출생 정보를 고르면 이 탭에 내 카페가 열려요.</p>
-    ${demoEntryForm()}
-    <p class="demo-gate-note">오락과 자기성찰을 위한 데모예요.</p>
-  </section></div>`;
+  const {theme,src,alt,title,hanja,line}=defaultDemoCover;
+  return `<div class="demo-gate"><div class="demo-gate-layout">
+    <figure class="demo-cover" data-theme="${theme}">
+      <img src="${esc(src)}" alt="${esc(alt)}" width="960" height="1200" decoding="async">
+      <figcaption class="demo-cover-caption" aria-live="polite" aria-atomic="true">
+        <span class="demo-cover-hanja" data-cover-hanja lang="ko-Hani">${esc(hanja)}</span>
+        <strong class="demo-cover-title" data-cover-title>${esc(title)}</strong>
+        <span class="demo-cover-line" data-cover-line>${esc(line)}</span>
+      </figcaption>
+    </figure>
+    <section class="demo-gate-card" aria-labelledby="demo-gate-title">
+      <h1 id="demo-gate-title">내 사주 카페</h1>
+      <p>출생 정보를 고르면 태어난 날에 맞는 그림이 나와요.</p>
+      ${demoEntryForm()}
+      <p class="demo-gate-note">오락과 자기성찰을 위한 데모예요.</p>
+    </section>
+  </div></div>`;
+}
+function updateDemoCover(profileId){
+  const figure=$('.demo-cover',main);
+  if(!figure)return;
+  const profile=demo.readings.find(item=>item.profileId===profileId);
+  const cover=demoCovers.get(profile?.dayPillar)??defaultDemoCover;
+  const picture=$('img',figure);
+  figure.dataset.theme=cover.theme;
+  picture.src=cover.src;
+  picture.alt=cover.alt;
+  $('[data-cover-title]',figure).textContent=cover.title;
+  $('[data-cover-hanja]',figure).textContent=cover.hanja;
+  $('[data-cover-line]',figure).textContent=cover.line;
 }
 function home(){
   if(config.demoOnly)return demoGate();
@@ -980,6 +1021,9 @@ main.addEventListener('input',event=>{
     commentThreads.get(activePost).draft.text=event.target.value;
     event.target.setCustomValidity('');
   }
+});
+main.addEventListener('change',event=>{
+  if(event.target.id==='demo-birth-profile')updateDemoCover(event.target.value);
 });
 main.addEventListener('submit',async event=>{
   const form=event.target;

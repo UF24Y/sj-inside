@@ -67,21 +67,68 @@ body.isolated-demo {
 body.isolated-demo .top, body.isolated-demo footer.wrap {display: none}
 body.isolated-demo .dark:hover {background: #164c3a; border-color: #164c3a}
 .demo-gate {display: grid; place-items: center; min-height: 100svh; padding-block: 24px}
-.demo-gate-card {
-  width: min(100%, 410px);
-  padding: clamp(19px, 5vw, 34px);
+.demo-gate-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  width: min(100%, 880px);
+  overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--panel);
-  box-shadow: 0 12px 38px #163e250d;
+  box-shadow: 0 16px 52px #18352812;
 }
-.demo-gate-brand {display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 1.04rem}
-.demo-gate-card h1 {margin-top: 18px; font-size: 1.66rem; line-height: 1.3; letter-spacing: -.04em}
+.demo-cover {
+  --cover-ink: #352a20;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  min-height: 468px;
+  padding: clamp(23px, 4vw, 50px);
+  background: #f6ecd9;
+  color: var(--cover-ink);
+}
+.demo-cover[data-theme="stone"] {--cover-ink: #263332}
+.demo-cover[data-theme="lamp"] {--cover-ink: #403525}
+.demo-cover[data-theme="ember"] {--cover-ink: #55372c}
+.demo-cover img, .demo-cover::after {position: absolute; inset: 0; width: 100%; height: 100%}
+.demo-cover img {z-index: -2; object-fit: cover}
+.demo-cover::after {
+  content: '';
+  z-index: -1;
+  background: linear-gradient(90deg, #f7eddbaa, #f7eddb00 69%), linear-gradient(0deg, #f5e8d3a8, #f5e8d300 61%);
+}
+.demo-cover-caption {display: grid; justify-items: start; gap: 8px}
+.demo-cover-hanja {
+  border: 1px solid #9a8260;
+  padding: 3px 9px;
+  background: #fbf2e4;
+  font: 650 .9rem/1.35 var(--serif);
+  letter-spacing: .16em;
+}
+.demo-cover-title {font: 830 clamp(2.45rem, 6vw, 4.25rem)/1.08 var(--serif); letter-spacing: -.085em}
+.demo-cover-line {font: 650 clamp(.84rem, 1.8vw, .98rem)/1.5 var(--sans)}
+.demo-gate-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: clamp(22px, 4.3vw, 52px);
+}
+.demo-gate-card h1 {font-size: 1.66rem; line-height: 1.3; letter-spacing: -.04em}
 .demo-gate-card > p {margin-top: 7px; color: var(--muted); font-size: .9rem}
 .demo-gate-card .demo-gallery-form {grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 20px 0 0}
 .demo-gate-card .demo-gallery-form :is(input, select) {font-size: 1rem; min-height: 44px}
 .demo-gate-card .demo-gallery-form .error:empty {display: none}
 .demo-gate-card > .demo-gate-note {margin-top: 12px; font-size: .78rem}
+@media (max-width: 700px) {
+  .demo-gate {align-items: start; padding-block: 18px 25px}
+  .demo-gate-layout {grid-template-columns: minmax(0, 1fr)}
+  .demo-cover {min-height: clamp(190px, 56vw, 280px); padding: 19px 21px}
+  .demo-cover img {object-position: center 54%}
+  .demo-cover-caption {gap: 6px}
+  .demo-gate-card h1 {font-size: 1.42rem}
+}
 .demo-exit {margin-inline-start: 3px; font-weight: 700}
 .demo-notice-arriving .gallery-pinned-row {animation: demo-notice-appear 240ms ease-out both}
 @keyframes demo-notice-appear {
